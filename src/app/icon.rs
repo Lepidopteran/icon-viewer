@@ -1,10 +1,13 @@
-use gtk::{glib, prelude::*, subclass::prelude::*};
+use gtk::{IconPaintable, glib, prelude::*, subclass::prelude::*};
+use std::path::PathBuf;
 
 #[derive(Debug, Default, Clone)]
 pub struct IconData {
     pub name: String,
     pub categories: Vec<String>,
-    pub is_symbolic: bool,
+    pub path: Option<PathBuf>,
+    pub symbolic: bool,
+    pub symlink: bool,
 }
 
 mod imp {
@@ -19,7 +22,13 @@ mod imp {
     pub struct IconObject {
         #[property(name = "name", get, set, member = name, type = String)]
         #[property(name = "categories", get, set, member = categories, type = Vec<String>)]
-        #[property(name = "is-symbolic", get, set, member = is_symbolic, type = bool)]
+        #[property(name = "symbolic", get, set, member = symbolic, type = bool)]
+        #[property(name = "symlink", get, set, member = symlink, type = bool)]
+        #[property(name = "path",
+            get = |o: &Self| o.data.borrow().path.as_ref().map(|p| p.display().to_string()),
+            set = |o: &Self, v: Option<String>| o.data.borrow_mut().path = v.map(PathBuf::from),
+            type = Option<String>
+        )]
         pub data: RefCell<IconData>,
     }
 
@@ -38,11 +47,19 @@ glib::wrapper! {
 }
 
 impl IconObject {
-    pub fn new(name: &str, categories: Vec<String>, is_symbolic: bool) -> Self {
+    pub fn new(
+        name: &str,
+        path: Option<PathBuf>,
+        categories: Vec<String>,
+        symbolic: bool,
+        symlink: bool,
+    ) -> Self {
         glib::Object::builder()
             .property("name", name)
             .property("categories", categories)
-            .property("is-symbolic", is_symbolic)
+            .property("symbolic", symbolic)
+            .property("symlink", symlink)
+            .property("path", path)
             .build()
     }
 
@@ -53,7 +70,13 @@ impl IconObject {
 
 impl From<IconData> for IconObject {
     fn from(data: IconData) -> Self {
-        IconObject::new(&data.name, data.categories, data.is_symbolic)
+        IconObject::new(
+            &data.name,
+            data.path,
+            data.categories,
+            data.symbolic,
+            data.symlink,
+        )
     }
 }
 

@@ -4,10 +4,11 @@ use gtk::{gio, glib};
 use nett_icon_viewer::*;
 
 mod imp {
+    use std::path::PathBuf;
+
     use gtk::{
-        CompositeTemplate, Image, ListItem, SignalListItemFactory, SingleSelection,
-        gio::ListStore, glib::subclass::prelude::*,
-        subclass::prelude::*,
+        CompositeTemplate, Image, ListItem, SignalListItemFactory, SingleSelection, gio::ListStore,
+        glib::subclass::prelude::*, subclass::prelude::*,
     };
 
     use super::*;
@@ -54,12 +55,22 @@ mod imp {
                         gtk::IconLookupFlags::empty(),
                     );
 
-                    if paintable.file().is_some() {
-                        Some(IconData {
+                    if let Some(path) = paintable.file().and_then(|f| f.path()) {
+                        let is_symlink = std::fs::symlink_metadata(&path)
+                            .map(|m| m.file_type().is_symlink())
+                            .unwrap_or(false);
+
+                        let data = IconData {
                             name: i.to_string(),
-                            is_symbolic: paintable.is_symbolic(),
+                            symbolic: paintable.is_symbolic(),
+                            symlink: is_symlink,
+                            path: Some(path),
                             ..Default::default()
-                        })
+                        };
+
+                        println!("{:?}", data);
+
+                        Some(data)
                     } else {
                         None
                     }
