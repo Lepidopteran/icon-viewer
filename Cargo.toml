@@ -1,0 +1,14 @@
+[package]
+name = "nett-icon-viewer"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+gtk = { version = "0.9.5", package = "gtk4", features = ["v4_14"] }
+directories = "6.0"
+dotenvy = "0.15.7"
+env_logger = "0.11.8"
+color-eyre = "0.6.5"
+
+[build-dependencies]
+glib-build-tools = "0.20.0"

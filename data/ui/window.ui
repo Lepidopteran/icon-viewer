@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="NettIconViewerWindow" parent="GtkApplicationWindow">
+    <property name="title">Nett Icon Viewer</property>
+    <property name="default_width">800</property>
+    <property name="default_height">600</property>
+    <child>
+      <object class="GtkGrid" id="layout">
+				<property name="hexpand">true</property>
+				<property name="vexpand">true</property>
+        <child>
+          <object class="GtkScrolledWindow">
+						<property name="propagate-natural-width">true</property>
+            <child>
+							<object class="GtkGridView" id="view">
+								<property name="hexpand">true</property>
+								<property name="vexpand">true</property>
+							</object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkCenterBox">
+            <property name="orientation">horizontal</property>
+            <child type="start">
+							<object class="GtkLabel" id="label">
+							</object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+  </template>
+</interface>
