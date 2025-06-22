@@ -1,6 +1,8 @@
 use gtk::{Application, prelude::*};
+use nett_icon_viewer::*;
 
 mod window;
+mod icon;
 
 pub const APP_ID: &str = "codes.blaine.nett-icon-viewer";
 
