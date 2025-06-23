@@ -4,8 +4,13 @@
     <child>
       <object class="GtkGrid" id="container">
 				<property name="halign">center</property>
+				<property name="margin-start">4</property>
+				<property name="margin-end">4</property>
+				<property name="margin-top">4</property>
+				<property name="margin-bottom">4</property>
         <child>
-					<object class="GtkImage" id="image">
+					<object class="GtkPicture" id="image">
+						<property name="can-shrink">false</property>
 						<layout>
 							<property name="row">0</property>
 							<property name="column">0</property>

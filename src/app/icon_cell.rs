@@ -25,7 +25,7 @@ mod imp {
         #[template_child]
         pub label: TemplateChild<gtk::Label>,
         #[template_child]
-        pub image: TemplateChild<gtk::Image>,
+        pub image: TemplateChild<gtk::Picture>,
 
         #[property(get, set)]
         pub icon_size: Cell<u32>,
