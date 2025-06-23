@@ -68,8 +68,6 @@ mod imp {
                             ..Default::default()
                         };
 
-                        println!("{:?}", data);
-
                         Some(data)
                     } else {
                         None
