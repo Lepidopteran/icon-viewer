@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="NettIconViewerIconCell" parent="GtkWidget">
+    <child>
+      <object class="GtkGrid" id="container">
+				<property name="halign">center</property>
+        <child>
+					<object class="GtkImage" id="image">
+						<layout>
+							<property name="row">0</property>
+							<property name="column">0</property>
+						</layout>
+					</object>
+        </child>
+				<child>
+					<object class="GtkLabel" id="label">
+						<property name="ellipsize">end</property>
+						<layout>
+							<property name="column">0</property>
+							<property name="row">1</property>
+						</layout>
+					</object>
+				</child>
+      </object>
+    </child>
+  </template>
+</interface>

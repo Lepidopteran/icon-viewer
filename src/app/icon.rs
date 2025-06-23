@@ -5,6 +5,7 @@ use std::path::PathBuf;
 pub struct IconData {
     pub name: String,
     pub categories: Vec<String>,
+    pub paintable: Option<IconPaintable>,
     pub path: Option<PathBuf>,
     pub symbolic: bool,
     pub symlink: bool,
@@ -24,6 +25,7 @@ mod imp {
         #[property(name = "categories", get, set, member = categories, type = Vec<String>)]
         #[property(name = "symbolic", get, set, member = symbolic, type = bool)]
         #[property(name = "symlink", get, set, member = symlink, type = bool)]
+        #[property(name = "paintable", get, set, member = paintable, type = Option<IconPaintable>)]
         #[property(name = "path",
             get = |o: &Self| o.data.borrow().path.as_ref().map(|p| p.display().to_string()),
             set = |o: &Self, v: Option<String>| o.data.borrow_mut().path = v.map(PathBuf::from),
@@ -50,6 +52,7 @@ impl IconObject {
     pub fn new(
         name: &str,
         path: Option<PathBuf>,
+        paintable: Option<IconPaintable>,
         categories: Vec<String>,
         symbolic: bool,
         symlink: bool,
@@ -60,6 +63,7 @@ impl IconObject {
             .property("symbolic", symbolic)
             .property("symlink", symlink)
             .property("path", path)
+            .property("paintable", paintable)
             .build()
     }
 
@@ -73,6 +77,7 @@ impl From<IconData> for IconObject {
         IconObject::new(
             &data.name,
             data.path,
+            data.paintable,
             data.categories,
             data.symbolic,
             data.symlink,

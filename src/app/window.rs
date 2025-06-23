@@ -11,6 +11,8 @@ mod imp {
         glib::subclass::prelude::*, subclass::prelude::*,
     };
 
+    use crate::app::icon_cell::IconWidget;
+
     use super::*;
 
     #[derive(CompositeTemplate, Debug, Default)]
@@ -49,7 +51,7 @@ mod imp {
                     let paintable = theme.lookup_icon(
                         i,
                         &[],
-                        0,
+                        64,
                         1,
                         gtk::TextDirection::Ltr,
                         gtk::IconLookupFlags::empty(),
@@ -65,6 +67,7 @@ mod imp {
                             symbolic: paintable.is_symbolic(),
                             symlink: is_symlink,
                             path: Some(path),
+                            paintable: Some(paintable),
                             ..Default::default()
                         };
 
@@ -82,11 +85,11 @@ mod imp {
 
             let factory = SignalListItemFactory::new();
             factory.connect_setup(move |_, list_item| {
-                let label = Image::builder().icon_size(gtk::IconSize::Large).build();
+                let cell = IconWidget::new();
                 list_item
                     .downcast_ref::<ListItem>()
                     .expect("Needs to be ListItem")
-                    .set_child(Some(&label));
+                    .set_child(Some(&cell));
             });
 
             factory.connect_bind(move |_, list_item| {
@@ -97,14 +100,14 @@ mod imp {
                     .and_downcast::<IconObject>()
                     .expect("The item has to be an `String`.");
 
-                let label = list_item
+                let cell = list_item
                     .downcast_ref::<ListItem>()
                     .expect("Needs to be ListItem")
                     .child()
-                    .and_downcast::<Image>()
+                    .and_downcast::<IconWidget>()
                     .expect("The child has to be a `Label`.");
 
-                label.set_icon_name(Some(&icon.name()));
+                cell.bind_data(&icon);
             });
 
             let selection = SingleSelection::builder().model(&store).build();
