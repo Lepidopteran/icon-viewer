@@ -1,15 +1,9 @@
 use gtk::prelude::*;
 use gtk::{gio, glib};
-use nett_icon_viewer::{
-    icon::{IconData, IconObject, IconWidget},
-    icon_theme,
-};
+use nett_icon_viewer::IconSelector;
 
 mod imp {
-    use gtk::{
-        CompositeTemplate, ListItem, SignalListItemFactory, SingleSelection, gio::ListStore,
-        glib::subclass::prelude::*, subclass::prelude::*,
-    };
+    use gtk::{CompositeTemplate, glib::subclass::prelude::*, subclass::prelude::*};
 
     use super::*;
 
@@ -17,7 +11,7 @@ mod imp {
     #[template(resource = "/codes/blaine/nett-icon-viewer/window.ui")]
     pub struct Window {
         #[template_child]
-        pub view: TemplateChild<gtk::GridView>,
+        pub view: TemplateChild<IconSelector>,
         #[template_child]
         pub label: TemplateChild<gtk::Label>,
     }
@@ -37,65 +31,7 @@ mod imp {
         }
     }
 
-    impl ObjectImpl for Window {
-        fn constructed(&self) {
-            self.parent_constructed();
-
-            let theme = icon_theme();
-            let icons = theme
-                .icon_names()
-                .iter()
-                .map(|n| IconObject::new(n, 64))
-                .collect::<Vec<_>>();
-
-            let store = ListStore::new::<IconObject>();
-
-            store.extend_from_slice(&icons);
-
-            let factory = SignalListItemFactory::new();
-            factory.connect_setup(move |_, list_item| {
-                let cell = IconWidget::new();
-                list_item
-                    .downcast_ref::<ListItem>()
-                    .expect("Needs to be ListItem")
-                    .set_child(Some(&cell));
-            });
-
-            factory.connect_bind(move |_, list_item| {
-                let icon = list_item
-                    .downcast_ref::<ListItem>()
-                    .expect("Needs to be ListItem")
-                    .item()
-                    .and_downcast::<IconObject>()
-                    .expect("The item has to be an `String`.");
-
-                let cell = list_item
-                    .downcast_ref::<ListItem>()
-                    .expect("Needs to be ListItem")
-                    .child()
-                    .and_downcast::<IconWidget>()
-                    .expect("The child has to be a `IconWidget`.");
-
-                cell.bind(&icon);
-            });
-
-            factory.connect_unbind(move |_, list_item| {
-                let cell = list_item
-                    .downcast_ref::<ListItem>()
-                    .expect("Needs to be ListItem")
-                    .child()
-                    .and_downcast::<IconWidget>()
-                    .expect("The child has to be a `IconWidget`.");
-
-                cell.unbind();
-            });
-
-            let selection = SingleSelection::builder().model(&store).build();
-
-            self.view.set_model(Some(&selection));
-            self.view.set_factory(Some(&factory));
-        }
-    }
+    impl ObjectImpl for Window {}
 
     impl WidgetImpl for Window {}
 

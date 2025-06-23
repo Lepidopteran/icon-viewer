@@ -3,5 +3,6 @@
 	<gresource prefix="/codes/blaine/nett-icon-viewer/">
 		<file compressed="true" preprocess="xml-stripblanks" alias="window.ui">ui/window.ui</file>
 		<file compressed="true" preprocess="xml-stripblanks" alias="icon_cell.ui">ui/icon_cell.ui</file>
+		<file compressed="true" preprocess="xml-stripblanks" alias="icon_selector.ui">ui/icon_selector.ui</file>
   </gresource>
 </gresources>

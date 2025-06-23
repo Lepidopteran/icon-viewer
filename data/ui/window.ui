@@ -6,25 +6,16 @@
     <property name="default_height">600</property>
     <child>
       <object class="GtkGrid" id="layout">
-				<property name="hexpand">true</property>
-				<property name="vexpand">true</property>
+        <property name="hexpand">true</property>
+        <property name="vexpand">true</property>
         <child>
-          <object class="GtkScrolledWindow">
-						<property name="propagate-natural-width">true</property>
-            <child>
-							<object class="GtkGridView" id="view">
-								<property name="hexpand">true</property>
-								<property name="vexpand">true</property>
-							</object>
-            </child>
-          </object>
+          <object class="NettIconViewerIconSelector" id="view"></object>
         </child>
         <child>
           <object class="GtkCenterBox">
             <property name="orientation">horizontal</property>
             <child type="start">
-							<object class="GtkLabel" id="label">
-							</object>
+              <object class="GtkLabel" id="label"></object>
             </child>
           </object>
         </child>
