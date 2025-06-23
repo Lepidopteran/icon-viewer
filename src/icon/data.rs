@@ -6,6 +6,7 @@ pub struct IconData {
     pub name: String,
     pub categories: Vec<String>,
     pub path: Option<PathBuf>,
+    pub symlink_path: Option<PathBuf>,
     pub symbolic: bool,
     pub symlink: bool,
 }
@@ -29,8 +30,14 @@ mod imp {
         #[property(name = "categories", get, member = categories, type = Vec<String>)]
         #[property(name = "symbolic", get, member = symbolic, type = bool)]
         #[property(name = "symlink", get, member = symlink, type = bool)]
-        #[property(name = "path",
+        #[property(
+            name = "path",
             get = |o: &Self| o.data.borrow().path.as_ref().map(|p| p.display().to_string()),
+            type = Option<String>
+        )]
+        #[property(
+            name = "symlink-path",
+            get = |o: &Self| o.data.borrow().symlink_path.as_ref().map(|p| p.display().to_string()),
             type = Option<String>
         )]
         pub data: RefCell<IconData>,
@@ -78,6 +85,11 @@ mod imp {
                     let is_symlink = std::fs::symlink_metadata(&path)
                         .map(|m| m.file_type().is_symlink())
                         .unwrap_or(false);
+
+                    if is_symlink {
+                        let symlink_path = std::fs::read_link(&path).ok();
+                        data.symlink_path = symlink_path;
+                    }
 
                     data.categories = get_categories_from_path(&path);
                     data.symlink = is_symlink;
