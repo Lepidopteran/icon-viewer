@@ -15,7 +15,10 @@ mod imp {
 
     use gtk::glib::Properties;
 
-    use crate::icon_theme;
+    use crate::{
+        category::{categorize_icon, get_categories_from_path},
+        icon_theme,
+    };
 
     use super::*;
 
@@ -76,12 +79,15 @@ mod imp {
                         .map(|m| m.file_type().is_symlink())
                         .unwrap_or(false);
 
+                    data.categories = get_categories_from_path(&path);
                     data.symlink = is_symlink;
                     data.path = Some(path);
                 }
 
                 data.symbolic = paintable.is_symbolic();
             }
+
+            log::debug!("{:?}", data);
 
             self.obj().set_paintable(paintable);
         }
