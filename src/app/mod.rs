@@ -3,7 +3,6 @@ use nett_icon_viewer::*;
 
 mod icon_cell;
 mod window;
-mod icon;
 
 pub const APP_ID: &str = "codes.blaine.nett-icon-viewer";
 

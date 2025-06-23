@@ -1,10 +1,10 @@
 use gtk::glib::subclass::prelude::*;
 use gtk::{IconPaintable, glib};
 
-use crate::app::icon::IconObject;
+use nett_icon_viewer::icon::IconObject;
 
 mod imp {
-    use std::cell::{Cell, RefCell};
+    use std::cell::{Cell};
 
     use gtk::glib::{subclass::InitializingObject, Properties};
     use gtk::prelude::*;

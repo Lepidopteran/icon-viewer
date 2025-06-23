@@ -1,13 +1,13 @@
-use super::icon::*;
 use gtk::prelude::*;
 use gtk::{gio, glib};
-use nett_icon_viewer::*;
+use nett_icon_viewer::{
+    icon_theme,
+    icon::{IconData, IconObject},
+};
 
 mod imp {
-    use std::path::PathBuf;
-
     use gtk::{
-        CompositeTemplate, Image, ListItem, SignalListItemFactory, SingleSelection, gio::ListStore,
+        CompositeTemplate, ListItem, SignalListItemFactory, SingleSelection, gio::ListStore,
         glib::subclass::prelude::*, subclass::prelude::*,
     };
 
