@@ -1,7 +1,7 @@
 use gtk::prelude::*;
 use gtk::{gio, glib};
 use nett_icon_viewer::{
-    icon::{IconData, IconObject},
+    icon::{IconData, IconObject, IconWidget},
     icon_theme,
 };
 
@@ -10,8 +10,6 @@ mod imp {
         CompositeTemplate, ListItem, SignalListItemFactory, SingleSelection, gio::ListStore,
         glib::subclass::prelude::*, subclass::prelude::*,
     };
-
-    use crate::app::icon_cell::IconWidget;
 
     use super::*;
 

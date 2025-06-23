@@ -2,7 +2,7 @@ use gtk::glib;
 use gtk::glib::object::ObjectExt;
 use gtk::glib::subclass::prelude::*;
 
-use nett_icon_viewer::icon::IconObject;
+use super::IconObject;
 
 mod imp {
     use std::cell::{Cell, RefCell};
