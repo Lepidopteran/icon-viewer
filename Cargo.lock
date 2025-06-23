@@ -708,6 +708,7 @@ dependencies = [
  "env_logger",
  "glib-build-tools",
  "gtk4",
+ "log",
 ]
 
 [[package]]
