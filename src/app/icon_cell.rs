@@ -1,12 +1,13 @@
+use gtk::glib;
+use gtk::glib::object::ObjectExt;
 use gtk::glib::subclass::prelude::*;
-use gtk::{IconPaintable, glib};
 
 use nett_icon_viewer::icon::IconObject;
 
 mod imp {
-    use std::cell::{Cell};
+    use std::cell::{Cell, RefCell};
 
-    use gtk::glib::{subclass::InitializingObject, Properties};
+    use gtk::glib::{Properties, subclass::InitializingObject};
     use gtk::prelude::*;
     use gtk::subclass::widget::WidgetImplExt;
     use gtk::subclass::widget::{
@@ -29,6 +30,8 @@ mod imp {
 
         #[property(get, set)]
         pub icon_size: Cell<u32>,
+
+        pub bindings: RefCell<Vec<glib::Binding>>,
     }
 
     #[glib::object_subclass]
@@ -53,8 +56,12 @@ mod imp {
 
             let target = self.image.clone();
             let outer = self.obj();
-            let _ = outer.bind_property("icon-size", &target, "width-request").build();
-            let _ = outer.bind_property("icon-size", &target, "height-request").build();
+            let _ = outer
+                .bind_property("icon-size", &target, "width-request")
+                .build();
+            let _ = outer
+                .bind_property("icon-size", &target, "height-request")
+                .build();
         }
 
         fn dispose(&self) {
@@ -86,9 +93,30 @@ impl IconWidget {
         glib::Object::builder().build()
     }
 
-    pub fn bind_data(&self, icon: &IconObject) {
-        self.imp().label.set_text(&icon.name());
-        self.imp().image.set_paintable(icon.paintable().as_ref());
+    pub fn bind(&self, icon: &IconObject) {
+        let image = self.imp().image.clone();
+        let label = self.imp().label.clone();
+        let mut bindings = self.imp().bindings.borrow_mut();
+
+        let image_binding = icon
+            .bind_property("paintable", &image, "paintable")
+            .sync_create()
+            .build();
+
+        bindings.push(image_binding);
+
+        let label_binding = icon
+            .bind_property("name", &label, "label")
+            .sync_create()
+            .build();
+
+        bindings.push(label_binding);
+    }
+
+    pub fn unbind(&self) {
+        for binding in self.imp().bindings.borrow_mut().drain(..) {
+            binding.unbind();
+        }
     }
 }
 

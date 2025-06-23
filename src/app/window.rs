@@ -1,8 +1,8 @@
 use gtk::prelude::*;
 use gtk::{gio, glib};
 use nett_icon_viewer::{
-    icon_theme,
     icon::{IconData, IconObject},
+    icon_theme,
 };
 
 mod imp {
@@ -47,36 +47,7 @@ mod imp {
             let icons = theme
                 .icon_names()
                 .iter()
-                .filter_map(|i| {
-                    let paintable = theme.lookup_icon(
-                        i,
-                        &[],
-                        64,
-                        1,
-                        gtk::TextDirection::Ltr,
-                        gtk::IconLookupFlags::empty(),
-                    );
-
-                    if let Some(path) = paintable.file().and_then(|f| f.path()) {
-                        let is_symlink = std::fs::symlink_metadata(&path)
-                            .map(|m| m.file_type().is_symlink())
-                            .unwrap_or(false);
-
-                        let data = IconData {
-                            name: i.to_string(),
-                            symbolic: paintable.is_symbolic(),
-                            symlink: is_symlink,
-                            path: Some(path),
-                            paintable: Some(paintable),
-                            ..Default::default()
-                        };
-
-                        Some(data)
-                    } else {
-                        None
-                    }
-                })
-                .map(IconObject::from)
+                .map(|n| IconObject::new(n, 64))
                 .collect::<Vec<_>>();
 
             let store = ListStore::new::<IconObject>();
@@ -105,9 +76,20 @@ mod imp {
                     .expect("Needs to be ListItem")
                     .child()
                     .and_downcast::<IconWidget>()
-                    .expect("The child has to be a `Label`.");
+                    .expect("The child has to be a `IconWidget`.");
 
-                cell.bind_data(&icon);
+                cell.bind(&icon);
+            });
+
+            factory.connect_unbind(move |_, list_item| {
+                let cell = list_item
+                    .downcast_ref::<ListItem>()
+                    .expect("Needs to be ListItem")
+                    .child()
+                    .and_downcast::<IconWidget>()
+                    .expect("The child has to be a `IconWidget`.");
+
+                cell.unbind();
             });
 
             let selection = SingleSelection::builder().model(&store).build();
