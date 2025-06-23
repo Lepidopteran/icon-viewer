@@ -25,7 +25,7 @@ pub fn categorize_icon(icon: &IconData) -> Vec<String> {
     }
 }
 
-fn get_categories_from_path(path: &Path) -> Vec<String> {
+pub fn get_categories_from_path(path: &Path) -> Vec<String> {
     let mut categories = split_up_path(path);
 
     categories.retain(|c| !["usr", "share", "icons", ".local", ".icons"].contains(&c.as_str()));
@@ -36,8 +36,9 @@ fn get_categories_from_path(path: &Path) -> Vec<String> {
         .find(|(_, c)| c.as_str() == "home")
     {
         if index == 0 {
+            let user = categories[index + 1].clone();
             categories.remove(index);
-            categories.remove(index + 1);
+            categories.retain(|c| c != &user);
         }
     }
 

@@ -52,6 +52,12 @@ mod imp {
             });
         }
 
+        pub fn init(&self) {
+            if self.paintable.borrow().is_none() {
+                self.render_icon(true);
+            }
+        }
+
         fn render_icon(&self, name_changed: bool) {
             let mut data = self.data.borrow_mut();
             let size = self.icon_size.get();
@@ -73,7 +79,7 @@ mod imp {
                     data.symlink = is_symlink;
                     data.path = Some(path);
                 }
-                data.path = paintable.file().and_then(|f| f.path());
+
                 data.symbolic = paintable.is_symbolic();
             }
 
@@ -91,8 +97,6 @@ mod imp {
     impl ObjectImpl for IconObject {
         fn constructed(&self) {
             self.parent_constructed();
-            self.render_icon(true);
-            self.setup_events();
         }
     }
 }
@@ -107,6 +111,9 @@ impl IconObject {
             .property("name", name)
             .property("icon-size", icon_size)
             .build();
+
+        icon.imp().init();
+        icon.imp().setup_events();
 
         icon
     }
