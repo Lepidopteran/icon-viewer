@@ -709,6 +709,7 @@ dependencies = [
  "glib-build-tools",
  "gtk4",
  "log",
+ "once_cell",
 ]
 
 [[package]]
