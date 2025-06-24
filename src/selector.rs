@@ -39,6 +39,7 @@ mod imp {
         pub copy_on_activate: Cell<bool>,
 
 
+        sorter: gtk::CustomSorter,
         model: gtk::SortListModel,
     }
 
@@ -98,7 +99,7 @@ mod imp {
 
             let filtered = gtk::FilterListModel::new(Some(store), None::<gtk::Filter>);
 
-            let sorter = gtk::CustomSorter::new(|a, b| {
+            self.sorter.set_sort_func(|a, b| {
                 let icon_a = a
                     .downcast_ref::<IconObject>()
                     .expect("Needs to be an `IconObject`.");
@@ -109,7 +110,7 @@ mod imp {
                 gtk::Ordering::from(icon_a.name().cmp(&icon_b.name()))
             });
 
-            let sort = gtk::SortListModel::new(Some(filtered), Some(sorter));
+            let sort = gtk::SortListModel::new(Some(filtered), Some(self.sorter.clone()));
             let factory = SignalListItemFactory::new();
             factory.connect_setup(move |_, list_item| {
                 let cell = IconWidget::new();
