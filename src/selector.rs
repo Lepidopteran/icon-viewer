@@ -32,7 +32,20 @@ mod imp {
         #[property(get, set)]
         pub icon_size: Cell<u32>,
 
+        #[property(get, set)]
+        pub selected: Cell<u32>,
+
         model: RefCell<Option<gtk::SortListModel>>,
+    }
+
+    impl IconSelector {
+        pub fn get_selected_icon(&self) -> Option<IconObject> {
+            self.model
+                .borrow()
+                .as_ref()
+                .and_then(|m| m.item(self.selected.get()))
+                .and_then(|i| i.downcast_ref::<IconObject>().cloned())
+        }
     }
 
     #[glib::object_subclass]
@@ -117,7 +130,13 @@ mod imp {
                 cell.unbind();
             });
 
+            let target = self.obj().clone();
             let selection = SingleSelection::builder().model(&sort).build();
+            let _ = selection
+                .bind_property("selected", &target, "selected")
+                .bidirectional()
+                .sync_create()
+                .build();
 
             self.model.replace(Some(sort));
             self.view.set_model(Some(&selection));
@@ -149,6 +168,10 @@ glib::wrapper! {
 impl IconSelector {
     pub fn new() -> Self {
         glib::Object::builder().build()
+    }
+
+    pub fn selected_icon(&self) -> Option<IconObject> {
+        self.imp().get_selected_icon()
     }
 }
 
