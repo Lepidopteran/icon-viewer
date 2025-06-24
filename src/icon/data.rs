@@ -16,10 +16,7 @@ mod imp {
 
     use gtk::glib::Properties;
 
-    use crate::{
-        category::get_categories_from_path,
-        icon_theme,
-    };
+    use crate::{category::get_categories_from_path, icon_theme};
 
     use super::*;
 
@@ -70,7 +67,8 @@ mod imp {
 
         fn render_icon(&self, name_changed: bool) {
             let mut data = self.data.borrow_mut();
-            let size = self.icon_size.get(); let paintable = icon_theme().lookup_icon(
+            let size = self.icon_size.get();
+            let paintable = icon_theme().lookup_icon(
                 &data.name,
                 &[],
                 size as i32,
@@ -79,6 +77,7 @@ mod imp {
                 gtk::IconLookupFlags::empty(),
             );
 
+            let outer = self.obj().clone();
             if name_changed {
                 if let Some(path) = paintable.file().and_then(|f| f.path()) {
                     let is_symlink = std::fs::symlink_metadata(&path)
@@ -88,6 +87,8 @@ mod imp {
                     if is_symlink {
                         let symlink_path = std::fs::read_link(&path).ok();
                         data.symlink_path = symlink_path;
+                    } else {
+                        data.symlink_path = None;
                     }
 
                     data.categories = get_categories_from_path(&path);
@@ -96,9 +97,18 @@ mod imp {
                 }
 
                 data.symbolic = paintable.is_symbolic();
+
+                // HACK: need to drop data so I don't get a BorrowError.
+                drop(data);
+
+                outer.notify_symlink_path();
+                outer.notify_categories();
+                outer.notify_path();
+                outer.notify_symbolic();
+                outer.notify_symlink();
             }
 
-            self.obj().set_paintable(paintable);
+            outer.set_paintable(paintable);
         }
     }
 
