@@ -17,7 +17,7 @@
 						<property name="margin-bottom">4</property>
             <property name="hexpand">true</property>
             <child>
-							<object class="GtkEntry" id="search">
+							<object class="GtkSearchEntry" id="search">
 								<property name="hexpand">true</property>
 							</object>
             </child>
