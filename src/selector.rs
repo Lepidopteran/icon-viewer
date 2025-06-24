@@ -32,7 +32,7 @@ mod imp {
         #[property(get, set)]
         pub icon_size: Cell<u32>,
 
-        store: RefCell<Option<gtk::gio::ListStore>>,
+        model: RefCell<Option<gtk::SortListModel>>,
     }
 
     #[glib::object_subclass]
@@ -65,7 +65,20 @@ mod imp {
             let store = ListStore::new::<IconObject>();
 
             store.extend_from_slice(&icons);
+            let filter = gtk::FilterListModel::new(Some(store), None::<gtk::Filter>);
 
+            let sorter = gtk::CustomSorter::new(|a, b| {
+                let icon_a = a
+                    .downcast_ref::<IconObject>()
+                    .expect("Needs to be an `IconObject`.");
+                let icon_b = b
+                    .downcast_ref::<IconObject>()
+                    .expect("Needs to be an `IconObject`.");
+
+                gtk::Ordering::from(icon_a.name().cmp(&icon_b.name()))
+            });
+
+            let sort = gtk::SortListModel::new(Some(filter), Some(sorter));
             let factory = SignalListItemFactory::new();
             factory.connect_setup(move |_, list_item| {
                 let cell = IconWidget::new();
@@ -104,9 +117,9 @@ mod imp {
                 cell.unbind();
             });
 
-            let selection = SingleSelection::builder().model(&store).build();
+            let selection = SingleSelection::builder().model(&sort).build();
 
-            self.store.replace(Some(store));
+            self.model.replace(Some(sort));
             self.view.set_model(Some(&selection));
             self.view.set_factory(Some(&factory));
         }
