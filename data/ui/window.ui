@@ -10,15 +10,55 @@
         <property name="vexpand">true</property>
         <child>
           <object class="NettIconViewerIconSelector" id="view">
-            <property name="copy-on-activate">true</property>
+            <layout>
+              <property name="row">0</property>
+              <property name="column">0</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="GtkSeparator">
+            <layout>
+              <property name="row">1</property>
+              <property name="column">0</property>
+            </layout>
           </object>
         </child>
         <child>
           <object class="GtkCenterBox">
             <property name="orientation">horizontal</property>
             <child type="start">
-              <object class="GtkLabel" id="label"></object>
+              <object class="GtkLabel" id="label">
+                <layout>
+                  <property name="row">2</property>
+                  <property name="column">0</property>
+                  <property name="column-span">2</property>
+                </layout>
+              </object>
             </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkSeparator">
+            <layout>
+              <property name="row">0</property>
+              <property name="column">1</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="GtkScrolledWindow">
+            <property name="propagate-natural-width">true</property>
+            <property name="propagate-natural-height">true</property>
+            <child>
+              <object class="NettIconViewerIconDetails" id="icon_details">
+                <property name="vexpand">true</property>
+              </object>
+            </child>
+            <layout>
+              <property name="row">0</property>
+              <property name="column">2</property>
+            </layout>
           </object>
         </child>
       </object>

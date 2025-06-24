@@ -1,9 +1,10 @@
 use gtk::prelude::*;
 use gtk::{gio, glib};
-use nett_icon_viewer::IconSelector;
+use nett_icon_viewer::{IconDetails, IconSelector};
 
 mod imp {
     use gtk::{CompositeTemplate, glib::subclass::prelude::*, subclass::prelude::*};
+    use nett_icon_viewer::icon::IconObject;
 
     use super::*;
 
@@ -14,6 +15,8 @@ mod imp {
         pub view: TemplateChild<IconSelector>,
         #[template_child]
         pub label: TemplateChild<gtk::Label>,
+        #[template_child]
+        pub icon_details: TemplateChild<IconDetails>,
     }
 
     #[glib::object_subclass]
@@ -31,7 +34,21 @@ mod imp {
         }
     }
 
-    impl ObjectImpl for Window {}
+    impl ObjectImpl for Window {
+        fn constructed(&self) {
+            self.parent_constructed();
+
+            let details = self.icon_details.get();
+            self.view.connect_activate(move |view, index| {
+                if let Some(icon) = view
+                    .model()
+                    .and_then(|m| m.item(index).and_downcast::<IconObject>())
+                {
+                    details.set_icon_name(icon.name());
+                }
+            });
+        }
+    }
 
     impl WidgetImpl for Window {}
 
