@@ -15,10 +15,7 @@ mod imp {
         gio::ListStore,
         glib::{Properties, subclass::InitializingObject},
         prelude::*,
-        subclass::widget::{
-            CompositeTemplateClass, CompositeTemplateInitializingExt, WidgetClassExt, WidgetImpl,
-            WidgetImplExt,
-        },
+        subclass::prelude::*,
     };
 
     use super::*;
@@ -41,17 +38,8 @@ mod imp {
         #[property(get, set)]
         pub copy_on_activate: Cell<bool>,
 
-        model: RefCell<Option<gtk::SortListModel>>,
-    }
 
-    impl IconSelector {
-        pub fn get_selected_icon(&self) -> Option<IconObject> {
-            self.model
-                .borrow()
-                .as_ref()
-                .and_then(|m| m.item(self.selected.get()))
-                .and_then(|i| i.downcast_ref::<IconObject>().cloned())
-        }
+        model: RefCell<Option<gtk::SortListModel>>,
     }
 
     #[glib::object_subclass]
@@ -62,10 +50,37 @@ mod imp {
 
         fn class_init(klass: &mut Self::Class) {
             klass.bind_template();
+            klass.bind_template_callbacks();
         }
 
         fn instance_init(obj: &InitializingObject<Self>) {
             obj.init_template();
+        }
+    }
+
+    #[gtk::template_callbacks]
+    impl IconSelector {
+        pub fn get_selected_icon(&self) -> Option<IconObject> {
+            self.model
+                .borrow()
+                .as_ref()
+                .and_then(|m| m.item(self.selected.get()))
+                .and_then(|i| i.downcast_ref::<IconObject>().cloned())
+        }
+
+        #[template_callback]
+        fn view_activate(&self) {
+            if self.copy_on_activate.get() {
+                let icon = self.get_selected_icon();
+                if let Some(icon) = icon {
+                    let clipboard = gtk::gdk::Display::default()
+                        .expect("Failed to get display")
+                        .clipboard();
+
+                    clipboard.set_text(&icon.name());
+                    log::debug!("Copied \"{}\" to clipboard", icon.name());
+                }
+            }
         }
     }
 
@@ -84,7 +99,8 @@ mod imp {
             let store = ListStore::new::<IconObject>();
 
             store.extend_from_slice(&icons);
-            let filter = gtk::FilterListModel::new(Some(store), None::<gtk::Filter>);
+
+            let filtered = gtk::FilterListModel::new(Some(store), None::<gtk::Filter>);
 
             let sorter = gtk::CustomSorter::new(|a, b| {
                 let icon_a = a
@@ -97,7 +113,7 @@ mod imp {
                 gtk::Ordering::from(icon_a.name().cmp(&icon_b.name()))
             });
 
-            let sort = gtk::SortListModel::new(Some(filter), Some(sorter));
+            let sort = gtk::SortListModel::new(Some(filtered), Some(sorter));
             let factory = SignalListItemFactory::new();
             factory.connect_setup(move |_, list_item| {
                 let cell = IconWidget::new();
@@ -143,21 +159,6 @@ mod imp {
                 .bidirectional()
                 .sync_create()
                 .build();
-
-            let selector = self.obj().clone();
-            self.view.connect_activate(move |_, _| {
-                if selector.copy_on_activate() {
-                    let icon = selector.selected_icon();
-                    if let Some(icon) = icon {
-                        let clipboard = gtk::gdk::Display::default()
-                            .expect("Failed to get display")
-                            .clipboard();
-
-                        clipboard.set_text(&icon.name());
-                        log::debug!("Copied \"{}\" to clipboard", icon.name());
-                    }
-                }
-            });
 
             self.model.replace(Some(sort));
             self.view.set_model(Some(&selection));

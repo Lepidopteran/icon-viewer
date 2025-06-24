@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
   <template class="NettIconViewerIconSelector" parent="GtkWidget">
-		<property name="hexpand">true</property>
-		<property name="vexpand">true</property>
+    <property name="hexpand">true</property>
+    <property name="vexpand">true</property>
     <child>
       <object class="GtkBox" id="layout">
         <property name="orientation">vertical</property>
@@ -11,29 +11,30 @@
         <child>
           <object class="GtkBox">
             <property name="orientation">horizontal</property>
-						<property name="margin-start">4</property>
-						<property name="margin-end">4</property>
-						<property name="margin-top">4</property>
-						<property name="margin-bottom">4</property>
+            <property name="margin-start">4</property>
+            <property name="margin-end">4</property>
+            <property name="margin-top">4</property>
+            <property name="margin-bottom">4</property>
             <property name="hexpand">true</property>
             <child>
-							<object class="GtkSearchEntry" id="search">
-								<property name="hexpand">true</property>
-							</object>
+              <object class="GtkSearchEntry" id="search">
+                <property name="hexpand">true</property>
+              </object>
             </child>
           </object>
         </child>
-				<child>
-					<object class="GtkSeparator" id="separator"></object>
-				</child>
+        <child>
+          <object class="GtkSeparator" id="separator"></object>
+        </child>
         <child>
           <object class="GtkScrolledWindow">
             <property name="propagate-natural-width">true</property>
             <property name="propagate-natural-height">true</property>
             <child>
               <object class="GtkGridView" id="view">
+                <signal handler="view_activate" name="activate" swapped="true"></signal>
                 <property name="hexpand">true</property>
-								<property name="vexpand">true</property>
+                <property name="vexpand">true</property>
               </object>
             </child>
           </object>
