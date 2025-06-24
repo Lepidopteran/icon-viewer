@@ -18,6 +18,7 @@
             <property name="hexpand">true</property>
             <child>
               <object class="GtkSearchEntry" id="search">
+                <signal handler="filter_changed" name="search_changed" swapped="true"></signal>
                 <property name="hexpand">true</property>
               </object>
             </child>

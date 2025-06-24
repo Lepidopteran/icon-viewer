@@ -7,7 +7,7 @@ use super::{
 };
 
 mod imp {
-    use std::cell::{Cell, RefCell};
+    use std::cell::Cell;
 
     use gtk::{
         Allocation, CompositeTemplate, ListItem, SignalListItemFactory, SingleSelection,
@@ -28,6 +28,8 @@ mod imp {
         pub layout: TemplateChild<gtk::Box>,
         #[template_child]
         pub view: TemplateChild<gtk::GridView>,
+        #[template_child]
+        pub search: TemplateChild<gtk::SearchEntry>,
 
         #[property(get, set)]
         pub icon_size: Cell<u32>,
@@ -40,6 +42,7 @@ mod imp {
 
 
         sorter: gtk::CustomSorter,
+        filter: gtk::CustomFilter,
         model: gtk::SortListModel,
     }
 
@@ -63,6 +66,11 @@ mod imp {
     impl IconSelector {
         pub fn get_selected_icon(&self) -> Option<IconObject> {
             self.model.item(self.selected.get()).and_downcast()
+        }
+
+        #[template_callback]
+        fn filter_changed(&self) {
+            self.filter.changed(gtk::FilterChange::Different);
         }
 
         #[template_callback]
@@ -97,7 +105,21 @@ mod imp {
 
             store.extend_from_slice(&icons);
 
-            let filtered = gtk::FilterListModel::new(Some(store), None::<gtk::Filter>);
+            let search_entry = self.search.clone();
+            self.filter.set_filter_func(move |item| {
+                let search_text = search_entry.text().to_string();
+                let icon = item
+                    .downcast_ref::<IconObject>()
+                    .expect("Needs to be an `IconObject`.");
+
+                if search_text.is_empty() {
+                    true
+                } else {
+                    icon.name().starts_with(&search_text)
+                }
+            });
+
+            let filtered = gtk::FilterListModel::new(Some(store), Some(self.filter.clone()));
 
             self.sorter.set_sort_func(|a, b| {
                 let icon_a = a
