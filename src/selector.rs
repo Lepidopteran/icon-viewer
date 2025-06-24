@@ -39,7 +39,7 @@ mod imp {
         pub copy_on_activate: Cell<bool>,
 
 
-        model: RefCell<Option<gtk::SortListModel>>,
+        model: gtk::SortListModel,
     }
 
     #[glib::object_subclass]
@@ -61,11 +61,7 @@ mod imp {
     #[gtk::template_callbacks]
     impl IconSelector {
         pub fn get_selected_icon(&self) -> Option<IconObject> {
-            self.model
-                .borrow()
-                .as_ref()
-                .and_then(|m| m.item(self.selected.get()))
-                .and_then(|i| i.downcast_ref::<IconObject>().cloned())
+            self.model.item(self.selected.get()).and_downcast()
         }
 
         #[template_callback]
@@ -160,7 +156,7 @@ mod imp {
                 .sync_create()
                 .build();
 
-            self.model.replace(Some(sort));
+            self.model.set_model(Some(&sort));
             self.view.set_model(Some(&selection));
             self.view.set_factory(Some(&factory));
         }
