@@ -17,7 +17,7 @@ mod imp {
     use gtk::glib::Properties;
 
     use crate::{
-        category::{categorize_icon, get_categories_from_path},
+        category::get_categories_from_path,
         icon_theme,
     };
 
@@ -70,8 +70,7 @@ mod imp {
 
         fn render_icon(&self, name_changed: bool) {
             let mut data = self.data.borrow_mut();
-            let size = self.icon_size.get();
-            let paintable = icon_theme().lookup_icon(
+            let size = self.icon_size.get(); let paintable = icon_theme().lookup_icon(
                 &data.name,
                 &[],
                 size as i32,
@@ -98,8 +97,6 @@ mod imp {
 
                 data.symbolic = paintable.is_symbolic();
             }
-
-            log::debug!("{:?}", data);
 
             self.obj().set_paintable(paintable);
         }
