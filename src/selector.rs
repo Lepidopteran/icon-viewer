@@ -9,14 +9,17 @@ use super::{
 mod imp {
     use std::cell::{Cell, RefCell};
 
-    use gtk::gio::ListStore;
-    use gtk::glib::{Properties, subclass::InitializingObject};
-    use gtk::subclass::widget::WidgetImplExt;
-    use gtk::subclass::widget::{
-        CompositeTemplateClass, CompositeTemplateInitializingExt, WidgetClassExt, WidgetImpl,
+    use gtk::{
+        Allocation, CompositeTemplate, ListItem, SignalListItemFactory, SingleSelection,
+        TemplateChild,
+        gio::ListStore,
+        glib::{Properties, subclass::InitializingObject},
+        prelude::*,
+        subclass::widget::{
+            CompositeTemplateClass, CompositeTemplateInitializingExt, WidgetClassExt, WidgetImpl,
+            WidgetImplExt,
+        },
     };
-    use gtk::{Allocation, CompositeTemplate, TemplateChild};
-    use gtk::{ListItem, SignalListItemFactory, SingleSelection, prelude::*};
 
     use super::*;
 
@@ -34,6 +37,9 @@ mod imp {
 
         #[property(get, set)]
         pub selected: Cell<u32>,
+
+        #[property(get, set)]
+        pub copy_on_activate: Cell<bool>,
 
         model: RefCell<Option<gtk::SortListModel>>,
     }
@@ -137,6 +143,21 @@ mod imp {
                 .bidirectional()
                 .sync_create()
                 .build();
+
+            let selector = self.obj().clone();
+            self.view.connect_activate(move |_, _| {
+                if selector.copy_on_activate() {
+                    let icon = selector.selected_icon();
+                    if let Some(icon) = icon {
+                        let clipboard = gtk::gdk::Display::default()
+                            .expect("Failed to get display")
+                            .clipboard();
+
+                        clipboard.set_text(&icon.name());
+                        log::debug!("Copied \"{}\" to clipboard", icon.name());
+                    }
+                }
+            });
 
             self.model.replace(Some(sort));
             self.view.set_model(Some(&selection));

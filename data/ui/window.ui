@@ -9,7 +9,9 @@
         <property name="hexpand">true</property>
         <property name="vexpand">true</property>
         <child>
-          <object class="NettIconViewerIconSelector" id="view"></object>
+          <object class="NettIconViewerIconSelector" id="view">
+            <property name="copy-on-activate">true</property>
+          </object>
         </child>
         <child>
           <object class="GtkCenterBox">
