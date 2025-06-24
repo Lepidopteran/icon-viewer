@@ -214,6 +214,13 @@ impl IconSelector {
     pub fn selected_icon(&self) -> Option<IconObject> {
         self.imp().get_selected_icon()
     }
+
+    pub fn connect_activate<F>(&self, f: F)
+    where
+        F: Fn(&gtk::GridView, u32) + 'static,
+    {
+        self.imp().view.connect_activate(f);
+    }
 }
 
 impl Default for IconSelector {
