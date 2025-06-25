@@ -56,11 +56,13 @@
                     <child>
                       <object class="NettIconViewerDataRow" id="tags_row">
                         <property name="title">Tags</property>
+                        <property name="value-ellipsize">end</property>
                       </object>
                     </child>
                     <child>
                       <object class="NettIconViewerDataRow" id="path_row">
                         <property name="title">File Path</property>
+                        <property name="value-ellipsize">start</property>
                       </object>
                     </child>
                     <child>
