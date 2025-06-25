@@ -1,11 +1,10 @@
 use gtk::glib;
-use gtk::glib::subclass::prelude::*;
 
 use nett_icon_viewer::{
-    DataRow,
-    icon::{IconObject, IconWidget},
-    icon_theme,
+    icon::{IconObject},
 };
+
+use super::data_row::DataRow;
 
 const DEFAULT_ICON_SIZE: u32 = 128;
 
@@ -19,7 +18,7 @@ mod imp {
         subclass::prelude::*,
     };
 
-    use super::*;
+    use super::{*};
 
     #[derive(CompositeTemplate, Properties, Default)]
     #[properties(wrapper_type = super::IconDetails)]
