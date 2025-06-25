@@ -1,7 +1,6 @@
 use gtk::{IconTheme};
 
 pub mod icon;
-pub mod category;
 mod selector;
 mod details;
 mod data_row;

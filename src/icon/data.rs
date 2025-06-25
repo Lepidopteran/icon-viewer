@@ -12,11 +12,14 @@ pub struct IconData {
 }
 
 mod imp {
-    use std::cell::{Cell, RefCell};
+    use std::{
+        cell::{Cell, RefCell},
+        path::Path,
+    };
 
     use gtk::glib::Properties;
 
-    use crate::{category::get_categories_from_path, icon_theme};
+    use crate::icon_theme;
 
     use super::*;
 
@@ -91,9 +94,9 @@ mod imp {
                         data.symlink_path = None;
                     }
 
-                    data.categories = get_categories_from_path(&path);
-                    data.symlink = is_symlink;
                     data.path = Some(path);
+                    data.symlink = is_symlink;
+                    data.categories = get_categories(&data);
                 }
 
                 data.symbolic = paintable.is_symbolic();
@@ -102,10 +105,10 @@ mod imp {
                 drop(data);
 
                 outer.notify_symlink_path();
-                outer.notify_categories();
                 outer.notify_path();
-                outer.notify_symbolic();
                 outer.notify_symlink();
+                outer.notify_categories();
+                outer.notify_symbolic();
             }
 
             outer.set_paintable(paintable);
@@ -122,6 +125,96 @@ mod imp {
     impl ObjectImpl for IconObject {
         fn constructed(&self) {
             self.parent_constructed();
+        }
+    }
+
+    fn split_up_path(path: &Path) -> Vec<String> {
+        path.iter()
+            .filter_map(|s| {
+                if s.to_str().unwrap() == "/" {
+                    None
+                } else {
+                    Some(s.to_str().unwrap().to_string())
+                }
+            })
+            .collect()
+    }
+
+    fn get_categories(icon: &IconData) -> Vec<String> {
+        let now = std::time::Instant::now();
+        log::trace!("Categorizing icon: \"{}\"", icon.name);
+        if let Some(path) = &icon.path {
+            log::trace!("Getting categories from: \"{}\"", path.display());
+            let mut categories = get_categories_from_path(path);
+
+            categories.retain(|c| !c.starts_with(icon.name.as_str()));
+
+            log::trace!(
+                "Categories retrieval took: {} µs",
+                now.elapsed().as_micros()
+            );
+
+            categories
+        } else {
+            log::debug!("Icon has no path");
+            vec![]
+        }
+    }
+
+    fn get_categories_from_path(path: &Path) -> Vec<String> {
+        let mut categories = split_up_path(path);
+
+        categories.retain(|c| !["usr", "share", "icons", ".local", ".icons"].contains(&c.as_str()));
+
+        if let Some((index, _)) = categories
+            .iter()
+            .enumerate()
+            .find(|(_, c)| c.as_str() == "home")
+        {
+            if index == 0 {
+                let user = categories[index + 1].clone();
+                categories.remove(index);
+                categories.retain(|c| c != &user);
+            }
+        }
+
+        categories
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        #[test]
+        fn test_split_up_path() {
+            let path = PathBuf::from("/usr/share/icons/Adwaita");
+            let result = split_up_path(&path);
+            assert_eq!(result, vec!["usr", "share", "icons", "Adwaita"]);
+        }
+
+        #[test]
+        fn test_categorize_icon() {
+            let icon = IconData {
+                name: "test".to_string(),
+                path: Some(PathBuf::from("/usr/share/icons/Adwaita/test.svg")),
+                ..Default::default()
+            };
+
+            assert_eq!(get_categories(&icon), vec!["Adwaita"]);
+        }
+
+        #[test]
+        fn test_get_categories_from_path() {
+            for (path, expected) in [
+                (PathBuf::from("/usr/share/icons/Adwaita"), vec!["Adwaita"]),
+                (PathBuf::from("/home/dev/.icons/Adwaita"), vec!["Adwaita"]),
+                (
+                    PathBuf::from("/home/dev/.local/share/icons/Adwaita"),
+                    vec!["Adwaita"],
+                ),
+            ] {
+                assert_eq!(get_categories_from_path(&path), expected);
+            }
         }
     }
 }
