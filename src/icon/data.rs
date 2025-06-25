@@ -49,21 +49,19 @@ mod imp {
     }
 
     impl IconObject {
-        pub fn setup_events(&self) {
-            let outer = self.obj();
-            outer.connect_icon_size_notify(move |outer| {
-                let inner = outer.imp();
-                inner.render_icon(false);
-            });
-
-            outer.connect_name_notify(move |outer| {
-                let inner = outer.imp();
-                inner.render_icon(true);
-            });
-        }
-
         pub fn init(&self) {
             if self.paintable.borrow().is_none() {
+                let outer = self.obj();
+                outer.connect_icon_size_notify(move |outer| {
+                    let inner = outer.imp();
+                    inner.render_icon(false);
+                });
+
+                outer.connect_name_notify(move |outer| {
+                    let inner = outer.imp();
+                    inner.render_icon(true);
+                });
+
                 self.render_icon(true);
             }
         }
@@ -231,8 +229,6 @@ impl IconObject {
             .build();
 
         icon.imp().init();
-        icon.imp().setup_events();
-
         icon
     }
 
