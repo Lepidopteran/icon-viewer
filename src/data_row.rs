@@ -1,4 +1,18 @@
-use gtk::glib;
+use gtk::{glib, pango::EllipsizeMode};
+
+/// The value ellipsize mode to use.
+///
+/// Basically a tells what [EllipsizeMode] should do for the value.
+#[derive(Debug, PartialEq, Eq, Clone, Copy, glib::Enum, Default)]
+#[enum_type(name = "DataRowValueEllipsizeMode")]
+pub enum ValueEllipsize {
+    None,
+    Center,
+    #[default]
+    Start,
+    End,
+}
+
 mod imp {
     use std::cell::{Cell, RefCell};
 
@@ -16,6 +30,15 @@ mod imp {
 
         #[property(get, set)]
         value: RefCell<String>,
+
+        #[property(get, set, builder(ValueEllipsize::None))]
+        value_ellipsize: Cell<ValueEllipsize>,
+
+        #[property(get, set, construct, default = true)]
+        value_selectable: Cell<bool>,
+
+        #[property(get, set)]
+        value_use_markup: Cell<bool>,
 
         title_label: gtk::Label,
         value_label: gtk::Label,
@@ -38,6 +61,8 @@ mod imp {
             title.set_xalign(0.0);
             title.set_opacity(0.5);
             title.set_halign(gtk::Align::Start);
+            title.set_selectable(false);
+            title.set_can_target(false);
 
             let text = &self.value_label;
             text.set_xalign(0.0);
@@ -47,6 +72,26 @@ mod imp {
 
             let _ = obj.bind_property("title", title, "label").build();
             let _ = obj.bind_property("value", text, "label").build();
+
+            let _ = obj
+                .bind_property("value-selectable", text, "selectable")
+                .build();
+
+            let _ = obj
+                .bind_property("value-use-markup", text, "use-markup")
+                .build();
+
+            let _ = obj
+                .bind_property("value-ellipsize", text, "ellipsize")
+                .transform_to(|_, v: ValueEllipsize| {
+                    Some(match v {
+                        ValueEllipsize::None => EllipsizeMode::None,
+                        ValueEllipsize::Center => EllipsizeMode::Middle,
+                        ValueEllipsize::Start => EllipsizeMode::Start,
+                        ValueEllipsize::End => EllipsizeMode::End,
+                    })
+                })
+                .build();
 
             let child = gtk::Box::new(gtk::Orientation::Vertical, 0);
 
@@ -68,9 +113,16 @@ glib::wrapper! {
 }
 
 impl DataRow {
-    pub fn new(title: &str, value: &str) -> Self {
+    pub fn new(
+        title: &str,
+        value: &str,
+        activatable: bool,
+        scrollable: bool,
+    ) -> Self {
         glib::Object::builder()
             .property("title", title)
+            .property("activatable", activatable)
+            .property("scrollable", scrollable)
             .property("value", value)
             .build()
     }
@@ -78,6 +130,6 @@ impl DataRow {
 
 impl Default for DataRow {
     fn default() -> Self {
-        Self::new("No title", "No text")
+        Self::new("No title", "No text", false, false)
     }
 }
