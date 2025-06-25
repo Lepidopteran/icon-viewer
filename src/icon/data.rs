@@ -1,14 +1,26 @@
 use gtk::{IconPaintable, glib, prelude::*, subclass::prelude::*};
-use std::path::PathBuf;
+use std::{cell::Ref, collections::HashSet, path::PathBuf};
 
 #[derive(Debug, Default, Clone)]
 pub struct IconData {
     pub name: String,
+    pub aliases: Vec<String>,
     pub categories: Vec<String>,
     pub path: Option<PathBuf>,
     pub symlink_path: Option<PathBuf>,
     pub symbolic: bool,
     pub symlink: bool,
+}
+
+impl IconData {
+    /// Adds a list of aliases to the existing aliases of the icon.
+    /// This method ensures that all aliases are unique by using a [HashSet].
+    pub fn add_aliases(&mut self, aliases: Vec<String>) {
+        self.aliases.extend(aliases);
+        let set: HashSet<_> = self.aliases.drain(..).collect();
+
+        self.aliases.extend(set);
+    }
 }
 
 mod imp {
@@ -27,6 +39,7 @@ mod imp {
     #[properties(wrapper_type = super::IconObject)]
     pub struct IconObject {
         #[property(name = "name", get, set, member = name, type = String)]
+        #[property(name = "aliases", get, set, member = aliases, type = Vec<String>)]
         #[property(name = "categories", get, member = categories, type = Vec<String>)]
         #[property(name = "symbolic", get, member = symbolic, type = bool)]
         #[property(name = "symlink", get, member = symlink, type = bool)]
@@ -64,6 +77,11 @@ mod imp {
 
                 self.render_icon(true);
             }
+        }
+
+        pub fn add_aliases(&self, aliases: Vec<String>) {
+            self.data.borrow_mut().add_aliases(aliases);
+            self.obj().notify_aliases();
         }
 
         fn render_icon(&self, name_changed: bool) {
@@ -232,13 +250,17 @@ impl IconObject {
         icon
     }
 
-    pub fn data(&self) -> IconData {
-        self.imp().data.borrow().clone()
+    pub fn add_aliases(&self, aliases: Vec<String>) {
+        self.imp().add_aliases(aliases);
+    }
+
+    pub fn data(&self) -> Ref<IconData> {
+        self.imp().data.borrow()
     }
 }
 
 impl From<IconObject> for IconData {
     fn from(icon: IconObject) -> Self {
-        icon.data()
+        icon.data().clone()
     }
 }
