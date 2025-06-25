@@ -45,15 +45,10 @@ mod imp {
 
             let obj = self.obj();
 
-            obj.set_margin_start(4);
-            obj.set_margin_bottom(4);
-            obj.set_margin_top(4);
-            obj.set_margin_end(4);
-
             let _ = obj.bind_property("title", title, "label").build();
             let _ = obj.bind_property("value", text, "label").build();
 
-            let child = gtk::Box::new(gtk::Orientation::Vertical, 4);
+            let child = gtk::Box::new(gtk::Orientation::Vertical, 0);
 
             child.append(title);
             child.append(text);

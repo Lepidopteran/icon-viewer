@@ -75,6 +75,7 @@
                     </child>
                     <style>
                       <class name="boxed-list"></class>
+                      <class name="rich-list"></class>
                     </style>
                   </object>
                 </child>
