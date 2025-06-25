@@ -73,6 +73,7 @@
                     <child>
                       <object class="NettIconViewerDataRow" id="symlink_path_row">
                         <property name="title">Target File Path</property>
+                        <property name="value-ellipsize">end</property>
                       </object>
                     </child>
                     <style>
