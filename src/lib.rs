@@ -2,11 +2,9 @@ use gtk::{IconTheme};
 
 pub mod icon;
 mod selector;
-mod details;
 mod data_row;
 
 pub use selector::*;
-pub use details::*;
 pub use data_row::*;
 
 pub fn icon_theme() -> IconTheme {

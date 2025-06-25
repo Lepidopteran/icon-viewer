@@ -1,6 +1,7 @@
 use gtk::prelude::*;
 use gtk::{gio, glib};
-use nett_icon_viewer::{IconDetails, IconSelector};
+use super::icon_details::IconDetails;
+use nett_icon_viewer::IconSelector;
 
 mod imp {
     use gtk::{CompositeTemplate, glib::subclass::prelude::*, subclass::prelude::*};

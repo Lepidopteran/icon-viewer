@@ -1,7 +1,7 @@
 use gtk::glib;
 use gtk::glib::subclass::prelude::*;
 
-use super::{
+use nett_icon_viewer::{
     DataRow,
     icon::{IconObject, IconWidget},
     icon_theme,
