@@ -31,6 +31,7 @@
           <object class="GtkScrolledWindow">
             <property name="propagate-natural-width">true</property>
             <property name="propagate-natural-height">true</property>
+            <property name="hscrollbar-policy">never</property>
             <child>
               <object class="GtkGridView" id="view">
                 <signal handler="view_activate" name="activate" swapped="true"></signal>
