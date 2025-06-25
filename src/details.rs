@@ -136,35 +136,35 @@ mod imp {
 
                     let symbolic = &inner.symbolic_row.get();
                     let _ = icon
-                        .bind_property("symbolic", symbolic, "text")
+                        .bind_property("symbolic", symbolic, "value")
                         .transform_to(|_, v: bool| Some(v.to_string().to_value()))
                         .sync_create()
                         .build();
 
                     let tags = &inner.tags_row.get();
                     let _ = icon
-                        .bind_property("categories", tags, "text")
+                        .bind_property("categories", tags, "value")
                         .transform_to(|_, v: Vec<String>| Some(v.join(", ").to_value()))
                         .sync_create()
                         .build();
 
                     let path = &inner.path_row.get();
                     let _ = icon
-                        .bind_property("path", path, "text")
+                        .bind_property("path", path, "value")
                         .transform_to(|_, v: String| Some(v.to_value()))
                         .sync_create()
                         .build();
 
                     let symlink = &inner.symlink_row.get();
                     let _ = icon
-                        .bind_property("symlink", symlink, "text")
+                        .bind_property("symlink", symlink, "value")
                         .transform_to(|_, v: bool| Some(v.to_string().to_value()))
                         .sync_create()
                         .build();
 
                     let symlink_path = &inner.symlink_path_row.get();
                     let _ = icon
-                        .bind_property("symlink-path", symlink_path, "text")
+                        .bind_property("symlink-path", symlink_path, "value")
                         .transform_to(|_, v: Option<String>| Some(v.unwrap_or_default().to_value()))
                         .sync_create()
                         .build();

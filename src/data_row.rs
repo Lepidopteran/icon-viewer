@@ -15,10 +15,10 @@ mod imp {
         title: RefCell<String>,
 
         #[property(get, set)]
-        text: RefCell<String>,
+        value: RefCell<String>,
 
         title_label: gtk::Label,
-        text_label: gtk::Label,
+        value_label: gtk::Label,
     }
 
     #[glib::object_subclass]
@@ -39,7 +39,7 @@ mod imp {
             title.set_opacity(0.5);
             title.set_halign(gtk::Align::Start);
 
-            let text = &self.text_label;
+            let text = &self.value_label;
             text.set_xalign(0.0);
             text.set_halign(gtk::Align::Start);
 
@@ -51,7 +51,7 @@ mod imp {
             obj.set_margin_end(4);
 
             let _ = obj.bind_property("title", title, "label").build();
-            let _ = obj.bind_property("text", text, "label").build();
+            let _ = obj.bind_property("value", text, "label").build();
 
             let child = gtk::Box::new(gtk::Orientation::Vertical, 4);
 
@@ -73,10 +73,10 @@ glib::wrapper! {
 }
 
 impl DataRow {
-    pub fn new(title: &str, text: &str) -> Self {
+    pub fn new(title: &str, value: &str) -> Self {
         glib::Object::builder()
             .property("title", title)
-            .property("text", text)
+            .property("value", value)
             .build()
     }
 }
