@@ -1,3 +1,5 @@
+use fuzzy_matcher::skim::SkimMatcherV2;
+use fuzzy_matcher::FuzzyMatcher;
 use gtk::glib;
 use gtk::glib::object::ObjectExt;
 use gtk::glib::subclass::prelude::*;
@@ -93,7 +95,7 @@ impl IconWidget {
         glib::Object::builder().build()
     }
 
-    pub fn bind(&self, icon: &IconObject) {
+    pub fn bind(&self, icon: &IconObject, search_text: &str) {
         let image = self.imp().image.clone();
         let label = self.imp().label.clone();
         let mut bindings = self.imp().bindings.borrow_mut();
@@ -111,12 +113,37 @@ impl IconWidget {
             .build();
 
         bindings.push(label_binding);
+
+        let text = label.text().to_string();
+        let matcher = SkimMatcherV2::default();
+
+        if search_text.is_empty() {
+            label.set_markup(&glib::markup_escape_text(&text));
+            return;
+        }
+
+        // Fuzzy match positions
+            if let Some((_, indices)) = matcher.fuzzy_indices(&text, search_text) {
+                let mut markup = String::new();
+                for (i, c) in text.chars().enumerate() {
+                    if indices.contains(&i) {
+                        markup.push_str(&format!("<span background='#99009955'><b>{}</b></span>", c));
+                    } else {
+                        markup.push(c);
+                    }
+                }
+                label.set_markup(&markup);
+            } else {
+                label.set_markup(&glib::markup_escape_text(&text));
+            }
     }
 
     pub fn unbind(&self) {
         for binding in self.imp().bindings.borrow_mut().drain(..) {
             binding.unbind();
         }
+        
+        self.imp().label.set_markup("");
     }
 }
 
