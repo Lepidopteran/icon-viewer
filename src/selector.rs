@@ -7,18 +7,22 @@ use super::{
 };
 
 mod imp {
-    use std::cell::Cell;
+    use std::cell::{Cell, RefCell};
 
     use gtk::{
-        Allocation, CompositeTemplate, ListItem, SignalListItemFactory, SingleSelection,
-        TemplateChild,
+        Allocation, CompositeTemplate, ListItem, ListScrollFlags, SignalListItemFactory,
+        SingleSelection, TemplateChild,
         gio::ListStore,
         glib::{Properties, subclass::InitializingObject},
         prelude::*,
         subclass::prelude::*,
     };
 
+    use fuzzy_matcher::{FuzzyMatcher, skim::SkimMatcherV2};
+
     use super::*;
+
+    type FilterFunction = Box<dyn Fn(&IconObject, &super::IconSelector) -> bool + 'static>;
 
     #[derive(CompositeTemplate, Properties, Default)]
     #[properties(wrapper_type = super::IconSelector)]
@@ -40,10 +44,33 @@ mod imp {
         #[property(get, set)]
         pub copy_on_activate: Cell<bool>,
 
+        #[property(get, set = set_group_symlinks, construct, default = true)]
+        pub group_symlinks: Cell<bool>,
+
+        #[property(get, set = set_include_tags_in_search, construct, default = true)]
+        pub include_tags_in_search: Cell<bool>,
+
+        #[property(get, set = set_included_tags, construct)]
+        pub included_tags: RefCell<Vec<String>>,
 
         sorter: gtk::CustomSorter,
         filter: gtk::CustomFilter,
         model: gtk::SortListModel,
+    }
+    
+    fn set_include_tags_in_search(imp: &IconSelector, value: bool) {
+        imp.include_tags_in_search.set(value);
+        imp.filter_changed();
+    }
+
+    fn set_group_symlinks(imp: &IconSelector, value: bool) {
+        imp.group_symlinks.set(value);
+        imp.filter_changed();
+    }
+
+    fn set_included_tags(imp: &IconSelector, value: Vec<String>) {
+        *imp.included_tags.borrow_mut() = value;
+        imp.filter_changed();
     }
 
     #[glib::object_subclass]
@@ -71,6 +98,16 @@ mod imp {
         #[template_callback]
         fn filter_changed(&self) {
             self.filter.changed(gtk::FilterChange::Different);
+        }
+
+        #[template_callback]
+        fn search_changed(&self) {
+            self.filter_changed();
+
+            let view = self.view.get();
+            glib::idle_add_local_once(move || {
+                view.scroll_to(0, ListScrollFlags::FOCUS, None);
+            });
         }
 
         #[template_callback]
@@ -105,23 +142,45 @@ mod imp {
 
             store.extend_from_slice(&icons);
 
-            let search_entry = self.search.clone();
+            let obj = self.obj().clone();
             self.filter.set_filter_func(move |item| {
-                let search_text = search_entry.text().to_string();
+                let search_text = obj.imp().search.text().to_string();
                 let icon = item
                     .downcast_ref::<IconObject>()
                     .expect("Needs to be an `IconObject`.");
 
-                if search_text.is_empty() {
-                    true
-                } else {
-                    icon.name().starts_with(&search_text)
-                }
+                let matcher = SkimMatcherV2::default();
+                let mut matches = matcher.fuzzy_match(&icon.name(), &search_text).is_some()
+                    || obj.include_tags_in_search()
+                        && matcher
+                            .fuzzy_match(&icon.categories().join(" "), &search_text)
+                            .is_some();
+
+                let filters: Vec<FilterFunction> = vec![
+                    Box::new(|icon: &IconObject, selector: &super::IconSelector| {
+                        if selector.group_symlinks() {
+                            !icon.symlink()
+                        } else {
+                            true
+                        }
+                    }),
+                    Box::new(|icon: &IconObject, selector: &super::IconSelector| {
+                        selector
+                            .included_tags()
+                            .iter()
+                            .all(|tag| icon.categories().contains(tag))
+                    }),
+                ];
+
+                matches &= filters.iter().all(|f| f(icon, &obj));
+
+                matches
             });
 
             let filtered = gtk::FilterListModel::new(Some(store), Some(self.filter.clone()));
 
-            self.sorter.set_sort_func(|a, b| {
+            let search_entry = self.search.get();
+            self.sorter.set_sort_func(move |a, b| {
                 let icon_a = a
                     .downcast_ref::<IconObject>()
                     .expect("Needs to be an `IconObject`.");
@@ -129,7 +188,20 @@ mod imp {
                     .downcast_ref::<IconObject>()
                     .expect("Needs to be an `IconObject`.");
 
-                gtk::Ordering::from(icon_a.name().cmp(&icon_b.name()))
+                let search_text = search_entry.text().to_string();
+                let matcher = SkimMatcherV2::default();
+
+                let score_a = matcher
+                    .fuzzy_match(&icon_a.name(), &search_text)
+                    .unwrap_or(0);
+                let score_b = matcher
+                    .fuzzy_match(&icon_b.name(), &search_text)
+                    .unwrap_or(0);
+
+                score_b
+                    .cmp(&score_a)
+                    .then_with(|| icon_a.name().cmp(&icon_b.name()))
+                    .into()
             });
 
             let sort = gtk::SortListModel::new(Some(filtered), Some(self.sorter.clone()));
@@ -142,6 +214,7 @@ mod imp {
                     .set_child(Some(&cell));
             });
 
+            let search = self.search.get();
             factory.connect_bind(move |_, list_item| {
                 let icon = list_item
                     .downcast_ref::<ListItem>()
@@ -157,7 +230,7 @@ mod imp {
                     .and_downcast::<IconWidget>()
                     .expect("The child has to be a `IconWidget`.");
 
-                cell.bind(&icon);
+                cell.bind(&icon, search.text().as_ref());
             });
 
             factory.connect_unbind(move |_, list_item| {
@@ -188,6 +261,7 @@ mod imp {
             self.layout.unparent();
         }
     }
+
     impl WidgetImpl for IconSelector {
         fn measure(&self, orientation: gtk::Orientation, for_size: i32) -> (i32, i32, i32, i32) {
             self.layout.measure(orientation, for_size)
