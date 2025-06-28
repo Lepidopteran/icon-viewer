@@ -31,6 +31,8 @@ mod imp {
         #[template_child]
         pub layout: TemplateChild<gtk::Box>,
         #[template_child]
+        pub scroll: TemplateChild<gtk::ScrolledWindow>,
+        #[template_child]
         pub view: TemplateChild<gtk::GridView>,
         #[template_child]
         pub search: TemplateChild<gtk::SearchEntry>,
@@ -57,7 +59,7 @@ mod imp {
         filter: gtk::CustomFilter,
         model: gtk::SortListModel,
     }
-    
+
     fn set_include_tags_in_search(imp: &IconSelector, value: bool) {
         imp.include_tags_in_search.set(value);
         imp.filter_changed();
@@ -104,10 +106,9 @@ mod imp {
         fn search_changed(&self) {
             self.filter_changed();
 
-            let view = self.view.get();
-            glib::idle_add_local_once(move || {
-                view.scroll_to(0, ListScrollFlags::FOCUS, None);
-            });
+            let scroll = self.scroll.get();
+            let adjustment = scroll.vadjustment();
+            adjustment.set_value(0.0);
         }
 
         #[template_callback]
@@ -178,6 +179,7 @@ mod imp {
             });
 
             let filtered = gtk::FilterListModel::new(Some(store), Some(self.filter.clone()));
+            filtered.set_incremental(true);
 
             let search_entry = self.search.get();
             self.sorter.set_sort_func(move |a, b| {

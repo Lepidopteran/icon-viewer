@@ -28,7 +28,7 @@
           <object class="GtkSeparator" id="separator"></object>
         </child>
         <child>
-          <object class="GtkScrolledWindow">
+          <object class="GtkScrolledWindow" id="scroll">
             <property name="propagate-natural-width">true</property>
             <property name="propagate-natural-height">true</property>
             <property name="hscrollbar-policy">never</property>
