@@ -1,16 +1,24 @@
+use super::icon_details::IconDetails;
 use gtk::prelude::*;
 use gtk::{gio, glib};
-use super::icon_details::IconDetails;
 use nett_icon_viewer::IconSelector;
 
 mod imp {
-    use gtk::{CompositeTemplate, glib::subclass::prelude::*, subclass::prelude::*};
+    use std::cell::Cell;
+
+    use gtk::{
+        CompositeTemplate,
+        glib::{Properties, subclass::prelude::*},
+        subclass::prelude::*,
+    };
     use nett_icon_viewer::icon::IconObject;
+    use once_cell::sync::OnceCell;
 
     use super::*;
 
-    #[derive(CompositeTemplate, Debug, Default)]
+    #[derive(CompositeTemplate, Properties, Debug, Default)]
     #[template(resource = "/codes/blaine/nett-icon-viewer/window.ui")]
+    #[properties(wrapper_type = super::Window)]
     pub struct Window {
         #[template_child]
         pub view: TemplateChild<IconSelector>,
@@ -18,6 +26,25 @@ mod imp {
         pub label: TemplateChild<gtk::Label>,
         #[template_child]
         pub icon_details: TemplateChild<IconDetails>,
+        #[template_child]
+        pub paned: TemplateChild<gtk::Paned>,
+
+        #[property(get)]
+        split_percentage: Cell<f64>,
+        split_percentage_handler_id: OnceCell<glib::SignalHandlerId>,
+    }
+
+    impl Window {
+        fn calculate_paned_position(&self) {
+            let paned = self.paned.get();
+            let percentage = self.split_percentage.get();
+            let width = self.obj().width() as f64;
+            let handler_id = self.split_percentage_handler_id.get().unwrap();
+
+            paned.block_signal(handler_id);
+            paned.set_position((width * percentage) as i32);
+            paned.unblock_signal(handler_id);
+        }
     }
 
     #[glib::object_subclass]
@@ -35,9 +62,32 @@ mod imp {
         }
     }
 
+    #[glib::derived_properties]
     impl ObjectImpl for Window {
         fn constructed(&self) {
             self.parent_constructed();
+
+            let obj = self.obj().clone();
+            let paned = self.paned.get();
+            let handler_id = paned.connect_position_notify(move |paned| {
+                let percentage =
+                    paned.position() as f64 / paned.size(gtk::Orientation::Horizontal) as f64;
+
+                if percentage != obj.imp().split_percentage.get() {
+                    obj.imp().split_percentage.set(percentage);
+                    obj.notify_split_percentage();
+                }
+            });
+
+            // NOTE: Block the signal before the initial position is set
+            paned.block_signal(&handler_id);
+
+            self.split_percentage_handler_id
+                .set(handler_id)
+                .expect("Failed to set handler");
+
+            // TODO: Add ability to save on split percentage on exit.
+            self.split_percentage.set(0.65);
 
             let details = self.icon_details.get();
             self.view.connect_activate(move |view, index| {
@@ -51,7 +101,23 @@ mod imp {
         }
     }
 
-    impl WidgetImpl for Window {}
+    impl WidgetImpl for Window {
+        fn map(&self) {
+            self.parent_map();
+
+            let obj = self.obj().clone();
+            glib::idle_add_local_once(move || {
+                obj.imp()
+                    .paned
+                    .unblock_signal(obj.imp().split_percentage_handler_id.get().unwrap());
+            });
+        }
+
+        fn size_allocate(&self, width: i32, height: i32, baseline: i32) {
+            self.parent_size_allocate(width, height, baseline);
+            self.calculate_paned_position();
+        }
+    }
 
     impl ApplicationWindowImpl for Window {}
 
@@ -67,6 +133,8 @@ glib::wrapper! {
 
 impl Window {
     pub fn new(app: &gtk::Application) -> Self {
-        glib::Object::builder().property("application", app).build()
+        let window: Self = glib::Object::builder().property("application", app).build();
+
+        window
     }
 }

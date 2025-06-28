@@ -5,47 +5,33 @@
     <property name="default_width">800</property>
     <property name="default_height">600</property>
     <child>
-      <object class="GtkGrid" id="layout">
+      <object class="GtkBox" id="layout">
+        <property name="orientation">vertical</property>
         <property name="hexpand">true</property>
         <property name="vexpand">true</property>
         <child>
-          <object class="NettIconViewerIconSelector" id="view">
-            <layout>
-              <property name="row">0</property>
-              <property name="column">0</property>
-            </layout>
-          </object>
-        </child>
-        <child>
-          <object class="GtkSeparator">
-            <layout>
-              <property name="row">0</property>
-              <property name="column">1</property>
-            </layout>
-          </object>
-        </child>
-        <child>
-          <object class="GtkScrolledWindow">
-            <property name="propagate-natural-width">true</property>
-            <property name="propagate-natural-height">true</property>
-            <property name="hscrollbar-policy">never</property>
-            <child>
-              <object class="NettIconViewerIconDetails" id="icon_details">
-                <property name="vexpand">true</property>
+          <object class="GtkPaned" id="paned">
+            <property name="orientation">horizontal</property>
+            <child type="start">
+              <object class="NettIconViewerIconSelector" id="view">
               </object>
             </child>
-            <layout>
-              <property name="row">0</property>
-              <property name="column">2</property>
-            </layout>
+            <child>
+              <object class="GtkScrolledWindow">
+                <property name="propagate-natural-width">true</property>
+                <property name="propagate-natural-height">true</property>
+                <property name="hscrollbar-policy">never</property>
+                <child>
+                  <object class="NettIconViewerIconDetails" id="icon_details">
+                    <property name="vexpand">true</property>
+                  </object>
+                </child>
+              </object>
+            </child>
           </object>
         </child>
         <child>
           <object class="GtkSeparator">
-            <layout>
-              <property name="row">1</property>
-              <property name="column">0</property>
-            </layout>
           </object>
         </child>
         <child>
@@ -55,11 +41,6 @@
               <object class="GtkLabel" id="label">
               </object>
             </child>
-            <layout>
-              <property name="row">3</property>
-              <property name="column">0</property>
-              <property name="column-span">2</property>
-            </layout>
           </object>
         </child>
       </object>
