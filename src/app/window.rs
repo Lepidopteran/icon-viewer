@@ -91,7 +91,7 @@ mod imp {
                 let percentage =
                     paned.position() as f64 / paned.size(gtk::Orientation::Horizontal) as f64;
 
-                log::info!("New split percentage: {}", percentage);
+                log::trace!("New split percentage: {}", percentage);
 
                 obj.imp().split_percentage.set(percentage);
                 obj.notify_split_percentage();
