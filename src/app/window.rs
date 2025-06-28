@@ -39,11 +39,29 @@ mod imp {
             let paned = self.paned.get();
             let percentage = self.split_percentage.get();
             let width = self.obj().width() as f64;
-            let handler_id = self.split_percentage_handler_id.get().unwrap();
 
-            paned.block_signal(handler_id);
+            self.block_handler();
             paned.set_position((width * percentage) as i32);
-            paned.unblock_signal(handler_id);
+
+            self.unblock_handler();
+        }
+
+        fn block_handler(&self) {
+            let handler_id = self.split_percentage_handler_id.get().unwrap();
+            self.paned.get().block_signal(handler_id);
+        }
+
+        fn unblock_handler(&self) {
+            let handler_id = self.split_percentage_handler_id.get().unwrap();
+            self.paned.get().unblock_signal(handler_id);
+        }
+
+        fn unblock_handler_at_idle(&self) {
+            let obj = self.obj().clone();
+
+            glib::idle_add_local_once(move || {
+                obj.imp().unblock_handler();
+            });
         }
     }
 
@@ -73,10 +91,10 @@ mod imp {
                 let percentage =
                     paned.position() as f64 / paned.size(gtk::Orientation::Horizontal) as f64;
 
-                if percentage != obj.imp().split_percentage.get() {
-                    obj.imp().split_percentage.set(percentage);
-                    obj.notify_split_percentage();
-                }
+                log::info!("New split percentage: {}", percentage);
+
+                obj.imp().split_percentage.set(percentage);
+                obj.notify_split_percentage();
             });
 
             // NOTE: Block the signal before the initial position is set
@@ -106,11 +124,19 @@ mod imp {
             self.parent_map();
 
             let obj = self.obj().clone();
-            glib::idle_add_local_once(move || {
-                obj.imp()
-                    .paned
-                    .unblock_signal(obj.imp().split_percentage_handler_id.get().unwrap());
+
+            obj.connect_maximized_notify(|window| {
+                let imp = window.imp();
+                imp.block_handler();
+
+                if window.is_maximized() {
+                    imp.unblock_handler();
+                } else {
+                    imp.unblock_handler_at_idle();
+                }
             });
+
+            self.unblock_handler_at_idle();
         }
 
         fn size_allocate(&self, width: i32, height: i32, baseline: i32) {
