@@ -38,7 +38,7 @@ mod imp {
     #[derive(Properties, Debug, Default)]
     #[properties(wrapper_type = super::IconObject)]
     pub struct IconObject {
-        #[property(name = "name", get, set, member = name, type = String)]
+        #[property(name = "name", get, set = set_name, member = name, type = String)]
         #[property(name = "aliases", get, set, member = aliases, type = Vec<String>)]
         #[property(name = "categories", get, member = categories, type = Vec<String>)]
         #[property(name = "symbolic", get, member = symbolic, type = bool)]
@@ -57,24 +57,25 @@ mod imp {
 
         #[property(get, set)]
         pub paintable: RefCell<Option<IconPaintable>>,
-        #[property(get, set)]
+        #[property(get, set = set_icon_size)]
         pub icon_size: Cell<u32>,
+    }
+
+    fn set_name(imp: &IconObject, name: &str) {
+        imp.data.borrow_mut().name = name.to_string();
+        imp.obj().notify_name();
+        imp.render_icon(true);
+    }
+
+    fn set_icon_size(imp: &IconObject, icon_size: u32) {
+        imp.icon_size.set(icon_size);
+        imp.obj().notify_icon_size();
+        imp.render_icon(false);
     }
 
     impl IconObject {
         pub fn init(&self) {
             if self.paintable.borrow().is_none() {
-                let outer = self.obj();
-                outer.connect_icon_size_notify(move |outer| {
-                    let inner = outer.imp();
-                    inner.render_icon(false);
-                });
-
-                outer.connect_name_notify(move |outer| {
-                    let inner = outer.imp();
-                    inner.render_icon(true);
-                });
-
                 self.render_icon(true);
             }
         }
