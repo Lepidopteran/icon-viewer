@@ -247,7 +247,6 @@ impl IconObject {
             .property("icon-size", icon_size)
             .build();
 
-        icon.imp().init();
         icon
     }
 
