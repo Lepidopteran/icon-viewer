@@ -28,17 +28,53 @@
           <object class="GtkSeparator" id="separator"></object>
         </child>
         <child>
-          <object class="GtkScrolledWindow" id="scroll">
-            <property name="propagate-natural-width">true</property>
-            <property name="propagate-natural-height">true</property>
-            <property name="hscrollbar-policy">never</property>
-            <child>
-              <object class="GtkGridView" id="view">
-                <signal handler="view_activate" name="activate" swapped="true"></signal>
+          <object class="GtkOverlay">
+            <property name="hexpand">true</property>
+            <property name="vexpand">true</property>
+            <child type="overlay">
+              <object class="GtkBox" id="loading">
+                <property name="visible">false</property>
+                <property name="halign">center</property>
+                <property name="valign">center</property>
                 <property name="hexpand">true</property>
                 <property name="vexpand">true</property>
+                <child>
+                  <object class="GtkBox">
+                    <property name="orientation">vertical</property>
+                    <property name="spacing">4</property>
+                    <property name="margin-start">4</property>
+                    <property name="margin-end">4</property>
+                    <property name="margin-top">4</property>
+                    <property name="margin-bottom">4</property>
+                    <child>
+                      <object class="GtkLabel" id="loading_label">
+                        <property name="label">Loading...</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkProgressBar" id="loading_progress"></object>
+                    </child>
+                  </object>
+                </child>
+                <style>
+                  <class name="view"></class>
+                </style>
               </object>
             </child>
+            <property name="child">
+              <object class="GtkScrolledWindow" id="scroll">
+                <property name="propagate-natural-width">true</property>
+                <property name="propagate-natural-height">true</property>
+                <property name="hscrollbar-policy">never</property>
+                <child>
+                  <object class="GtkGridView" id="view">
+                    <signal handler="view_activate" name="activate" swapped="true"></signal>
+                    <property name="hexpand">true</property>
+                    <property name="vexpand">true</property>
+                  </object>
+                </child>
+              </object>
+            </property>
           </object>
         </child>
       </object>

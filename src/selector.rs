@@ -30,10 +30,19 @@ mod imp {
     pub struct IconSelector {
         #[template_child]
         pub layout: TemplateChild<gtk::Box>,
+
         #[template_child]
         pub scroll: TemplateChild<gtk::ScrolledWindow>,
+
         #[template_child]
         pub view: TemplateChild<gtk::GridView>,
+
+        #[template_child]
+        pub loading: TemplateChild<gtk::Box>,
+
+        #[template_child]
+        pub loading_progress: TemplateChild<gtk::ProgressBar>,
+
         #[template_child]
         pub search: TemplateChild<gtk::SearchEntry>,
 
@@ -55,9 +64,12 @@ mod imp {
         #[property(get, set = set_included_tags, construct)]
         pub included_tags: RefCell<Vec<String>>,
 
+        #[property(get)]
+        pub num_items: Cell<u32>,
+
         sorter: gtk::CustomSorter,
         filter: gtk::CustomFilter,
-        model: gtk::SortListModel,
+        list: gtk::SortListModel,
     }
 
     fn set_include_tags_in_search(imp: &IconSelector, value: bool) {
@@ -94,7 +106,7 @@ mod imp {
     #[gtk::template_callbacks]
     impl IconSelector {
         pub fn get_selected_icon(&self) -> Option<IconObject> {
-            self.model.item(self.selected.get()).and_downcast()
+            self.list.item(self.selected.get()).and_downcast()
         }
 
         #[template_callback]
@@ -105,10 +117,6 @@ mod imp {
         #[template_callback]
         fn search_changed(&self) {
             self.filter_changed();
-
-            let scroll = self.scroll.get();
-            let adjustment = scroll.vadjustment();
-            adjustment.set_value(0.0);
         }
 
         #[template_callback]
@@ -127,6 +135,26 @@ mod imp {
         }
     }
 
+    fn handle_filter_pending(list: &gtk::FilterListModel, obj: &super::IconSelector) {
+        let imp = obj.imp();
+        let amount_pending = list.pending();
+
+        log::trace!("Filter Pending {}", amount_pending);
+
+        imp.scroll.vadjustment().set_value(1.0);
+        let num_items = imp.num_items.get() as f64;
+        imp.loading_progress
+            .set_fraction((num_items - amount_pending as f64) / num_items);
+
+        if amount_pending == 0 {
+            imp.loading.set_visible(false);
+            imp.view.set_opacity(1.0);
+        } else {
+            imp.loading.set_visible(true);
+            imp.view.set_opacity(0.5);
+        }
+    }
+
     #[glib::derived_properties]
     impl ObjectImpl for IconSelector {
         fn constructed(&self) {
@@ -138,6 +166,9 @@ mod imp {
                 .iter()
                 .map(|n| IconObject::new(n, 64))
                 .collect::<Vec<_>>();
+
+            self.num_items.set(icons.len() as u32);
+            self.obj().notify_num_items();
 
             let store = ListStore::new::<IconObject>();
 
@@ -181,6 +212,9 @@ mod imp {
             let filtered = gtk::FilterListModel::new(Some(store), Some(self.filter.clone()));
             filtered.set_incremental(true);
 
+            let obj = self.obj().clone();
+            filtered.connect_pending_notify(move |list| handle_filter_pending(list, &obj));
+
             let search_entry = self.search.get();
             self.sorter.set_sort_func(move |a, b| {
                 let icon_a = a
@@ -207,6 +241,7 @@ mod imp {
             });
 
             let sort = gtk::SortListModel::new(Some(filtered), Some(self.sorter.clone()));
+
             let factory = SignalListItemFactory::new();
             factory.connect_setup(move |_, list_item| {
                 let cell = IconWidget::new();
@@ -254,7 +289,7 @@ mod imp {
                 .sync_create()
                 .build();
 
-            self.model.set_model(Some(&sort));
+            self.list.set_model(Some(&sort));
             self.view.set_model(Some(&selection));
             self.view.set_factory(Some(&factory));
         }
