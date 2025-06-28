@@ -113,7 +113,7 @@ mod imp {
 
                     data.path = Some(path);
                     data.symlink = is_symlink;
-                    data.categories = get_categories(&data);
+                    data.categories = get_tags(&data);
                 }
 
                 data.symbolic = paintable.is_symbolic();
@@ -157,12 +157,12 @@ mod imp {
             .collect()
     }
 
-    fn get_categories(icon: &IconData) -> Vec<String> {
+    fn get_tags(icon: &IconData) -> Vec<String> {
         let now = std::time::Instant::now();
         log::trace!("Categorizing icon: \"{}\"", icon.name);
         if let Some(path) = &icon.path {
             log::trace!("Getting categories from: \"{}\"", path.display());
-            let mut categories = get_categories_from_path(path);
+            let mut categories = get_tags_from_path(path);
 
             categories.retain(|c| !c.starts_with(icon.name.as_str()));
 
@@ -178,7 +178,7 @@ mod imp {
         }
     }
 
-    fn get_categories_from_path(path: &Path) -> Vec<String> {
+    fn get_tags_from_path(path: &Path) -> Vec<String> {
         let mut categories = split_up_path(path);
 
         categories.retain(|c| !["usr", "share", "icons", ".local", ".icons"].contains(&c.as_str()));
@@ -217,11 +217,11 @@ mod imp {
                 ..Default::default()
             };
 
-            assert_eq!(get_categories(&icon), vec!["Adwaita"]);
+            assert_eq!(get_tags(&icon), vec!["Adwaita"]);
         }
 
         #[test]
-        fn test_get_categories_from_path() {
+        fn test_get_tags_from_path() {
             for (path, expected) in [
                 (PathBuf::from("/usr/share/icons/Adwaita"), vec!["Adwaita"]),
                 (PathBuf::from("/home/dev/.icons/Adwaita"), vec!["Adwaita"]),
@@ -230,7 +230,7 @@ mod imp {
                     vec!["Adwaita"],
                 ),
             ] {
-                assert_eq!(get_categories_from_path(&path), expected);
+                assert_eq!(get_tags_from_path(&path), expected);
             }
         }
     }
