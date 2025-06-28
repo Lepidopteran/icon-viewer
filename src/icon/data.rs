@@ -5,7 +5,7 @@ use std::{cell::Ref, collections::HashSet, path::PathBuf};
 pub struct IconData {
     pub name: String,
     pub aliases: Vec<String>,
-    pub categories: Vec<String>,
+    pub tags: Vec<String>,
     pub path: Option<PathBuf>,
     pub symlink_path: Option<PathBuf>,
     pub symbolic: bool,
@@ -40,7 +40,7 @@ mod imp {
     pub struct IconObject {
         #[property(name = "name", get, set = set_name, member = name, type = String)]
         #[property(name = "aliases", get, set, member = aliases, type = Vec<String>)]
-        #[property(name = "categories", get, member = categories, type = Vec<String>)]
+        #[property(name = "tags", get, member = tags, type = Vec<String>)]
         #[property(name = "symbolic", get, member = symbolic, type = bool)]
         #[property(name = "symlink", get, member = symlink, type = bool)]
         #[property(
@@ -113,7 +113,7 @@ mod imp {
 
                     data.path = Some(path);
                     data.symlink = is_symlink;
-                    data.categories = get_tags(&data);
+                    data.tags = get_tags(&data);
                 }
 
                 data.symbolic = paintable.is_symbolic();
@@ -124,7 +124,7 @@ mod imp {
                 outer.notify_symlink_path();
                 outer.notify_path();
                 outer.notify_symlink();
-                outer.notify_categories();
+                outer.notify_tags();
                 outer.notify_symbolic();
             }
 

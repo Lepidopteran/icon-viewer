@@ -142,7 +142,7 @@ mod imp {
 
                     let tags = &inner.tags_row.get();
                     let _ = icon
-                        .bind_property("categories", tags, "value")
+                        .bind_property("tags", tags, "value")
                         .transform_to(|_, v: Vec<String>| Some(v.join(", ").to_value()))
                         .sync_create()
                         .build();

@@ -154,7 +154,7 @@ mod imp {
                 let mut matches = matcher.fuzzy_match(&icon.name(), &search_text).is_some()
                     || obj.include_tags_in_search()
                         && matcher
-                            .fuzzy_match(&icon.categories().join(" "), &search_text)
+                            .fuzzy_match(&icon.tags().join(" "), &search_text)
                             .is_some();
 
                 let filters: Vec<FilterFunction> = vec![
@@ -169,7 +169,7 @@ mod imp {
                         selector
                             .included_tags()
                             .iter()
-                            .all(|tag| icon.categories().contains(tag))
+                            .all(|tag| icon.tags().contains(tag))
                     }),
                 ];
 
