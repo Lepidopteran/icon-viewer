@@ -1,5 +1,5 @@
-use fuzzy_matcher::skim::SkimMatcherV2;
 use fuzzy_matcher::FuzzyMatcher;
+use fuzzy_matcher::skim::SkimMatcherV2;
 use gtk::glib;
 use gtk::glib::object::ObjectExt;
 use gtk::glib::subclass::prelude::*;
@@ -123,26 +123,26 @@ impl IconWidget {
         }
 
         // Fuzzy match positions
-            if let Some((_, indices)) = matcher.fuzzy_indices(&text, search_text) {
-                let mut markup = String::new();
-                for (i, c) in text.chars().enumerate() {
-                    if indices.contains(&i) {
-                        markup.push_str(&format!("<span background='#99009955'><b>{}</b></span>", c));
-                    } else {
-                        markup.push(c);
-                    }
+        if let Some((_, indices)) = matcher.fuzzy_indices(&text, search_text) {
+            let mut markup = String::new();
+            for (i, c) in text.chars().enumerate() {
+                if indices.contains(&i) {
+                    markup.push_str(&format!("<span background='#99009955'><b>{}</b></span>", c));
+                } else {
+                    markup.push(c);
                 }
-                label.set_markup(&markup);
-            } else {
-                label.set_markup(&glib::markup_escape_text(&text));
             }
+            label.set_markup(&markup);
+        } else {
+            label.set_markup(&glib::markup_escape_text(&text));
+        }
     }
 
     pub fn unbind(&self) {
         for binding in self.imp().bindings.borrow_mut().drain(..) {
             binding.unbind();
         }
-        
+
         self.imp().label.set_markup("");
     }
 }
