@@ -69,6 +69,7 @@
                 <child>
                   <object class="GtkGridView" id="view">
                     <signal handler="view_activate" name="activate" swapped="true"></signal>
+                    <property name="single-click-activate">true</property>
                     <property name="hexpand">true</property>
                     <property name="vexpand">true</property>
                   </object>
