@@ -15,7 +15,7 @@ mod imp {
         gio::ListStore,
         glib::{Properties, subclass::InitializingObject},
         prelude::*,
-        subclass::{prelude::*},
+        subclass::prelude::*,
     };
 
     use fuzzy_matcher::{FuzzyMatcher, skim::SkimMatcherV2};
@@ -72,16 +72,19 @@ mod imp {
     fn set_include_tags_in_search(imp: &IconSelector, value: bool) {
         imp.include_tags_in_search.set(value);
         imp.filter_changed();
+        imp.obj().notify_include_tags_in_search();
     }
 
     fn set_group_symlinks(imp: &IconSelector, value: bool) {
         imp.group_symlinks.set(value);
         imp.filter_changed();
+        imp.obj().notify_group_symlinks();
     }
 
     fn set_included_tags(imp: &IconSelector, value: Vec<String>) {
         *imp.included_tags.borrow_mut() = value;
         imp.filter_changed();
+        imp.obj().notify_included_tags();
     }
 
     #[glib::object_subclass]
