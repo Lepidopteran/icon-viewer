@@ -57,6 +57,40 @@
               </object>
             </child>
             <child type="end">
+              <object class="GtkBox">
+                <property name="orientation">horizontal</property>
+                <child>
+                  <object class="GtkBox">
+                    <property name="orientation">horizontal</property>
+                    <property name="valign">center</property>
+                    <property name="spacing">2</property>
+										<property name="margin-top">6</property>
+                    <child>
+                      <object class="GtkLabel">
+                        <property name="label">Icon Size</property>
+                        <property name="mnemonic-widget">scale</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkScale" id="scale">
+                        <property name="width-request">200</property>
+                        <property name="height-request">20</property>
+                        <property name="draw-value">true</property>
+                        <property name="value-pos">right</property>
+                        <property name="adjustment">
+                          <object class="GtkAdjustment">
+                            <property name="lower">16</property>
+                            <property name="upper">256</property>
+                            <property name="step-increment">8</property>
+                            <property name="page-increment">64</property>
+                            <property name="page-size">0</property>
+                          </object>
+                        </property>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
             </child>
             <style>
               <class name="view"></class>

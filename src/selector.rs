@@ -6,12 +6,14 @@ use super::{
     icon_theme,
 };
 
+const DEFAULT_ICON_SIZE: u32 = 64;
+
 mod imp {
     use std::cell::{Cell, RefCell};
 
     use gtk::{
-        Allocation, CompositeTemplate, ListItem, SignalListItemFactory,
-        SingleSelection, TemplateChild,
+        Allocation, CompositeTemplate, ListItem, SignalListItemFactory, SingleSelection,
+        TemplateChild,
         gio::ListStore,
         glib::{Properties, subclass::InitializingObject},
         prelude::*,
@@ -41,9 +43,12 @@ mod imp {
         pub count_label: TemplateChild<gtk::Label>,
 
         #[template_child]
+        pub scale: TemplateChild<gtk::Scale>,
+
+        #[template_child]
         pub search: TemplateChild<gtk::SearchEntry>,
 
-        #[property(get, set)]
+        #[property(get, set = set_icon_size, construct, default = DEFAULT_ICON_SIZE)]
         pub icon_size: Cell<u32>,
 
         #[property(get, set)]
@@ -67,6 +72,19 @@ mod imp {
         sorter: gtk::CustomSorter,
         filter: gtk::CustomFilter,
         list: gtk::SortListModel,
+    }
+
+    fn set_icon_size(imp: &IconSelector, value: u32) {
+        imp.icon_size.set(value);
+
+        if let Some(model) = imp.list.model() {
+            for item in model.into_iter().flatten() {
+                let icon = item.downcast_ref::<IconObject>().unwrap();
+                icon.set_icon_size(value);
+            }
+        }
+
+        imp.obj().notify_icon_size();
     }
 
     fn set_include_tags_in_search(imp: &IconSelector, value: bool) {
@@ -167,7 +185,7 @@ mod imp {
             let icons = theme
                 .icon_names()
                 .iter()
-                .map(|n| IconObject::new(n, 64))
+                .map(|n| IconObject::new(n, self.icon_size.get()))
                 .collect::<Vec<_>>();
 
             self.num_items.set(icons.len() as u32);
@@ -288,6 +306,19 @@ mod imp {
             let selection = SingleSelection::builder().model(&sort).build();
             let _ = selection
                 .bind_property("selected", &target, "selected")
+                .bidirectional()
+                .sync_create()
+                .build();
+
+            let scale = self.scale.get();
+
+            for snap_scale in (32..256).step_by(32) {
+                scale.add_mark(snap_scale as f64, gtk::PositionType::Top, None);
+            }
+
+            let icon_adjustment = scale.adjustment();
+            let _ = target
+                .bind_property("icon_size", &icon_adjustment, "value")
                 .bidirectional()
                 .sync_create()
                 .build();
