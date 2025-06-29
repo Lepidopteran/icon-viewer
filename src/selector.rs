@@ -10,12 +10,12 @@ mod imp {
     use std::cell::{Cell, RefCell};
 
     use gtk::{
-        Allocation, CompositeTemplate, ListItem, ListScrollFlags, SignalListItemFactory,
+        Allocation, CompositeTemplate, ListItem, SignalListItemFactory,
         SingleSelection, TemplateChild,
         gio::ListStore,
         glib::{Properties, subclass::InitializingObject},
         prelude::*,
-        subclass::prelude::*,
+        subclass::{prelude::*},
     };
 
     use fuzzy_matcher::{FuzzyMatcher, skim::SkimMatcherV2};
@@ -38,10 +38,7 @@ mod imp {
         pub view: TemplateChild<gtk::GridView>,
 
         #[template_child]
-        pub loading: TemplateChild<gtk::Box>,
-
-        #[template_child]
-        pub loading_progress: TemplateChild<gtk::ProgressBar>,
+        pub count_label: TemplateChild<gtk::Label>,
 
         #[template_child]
         pub search: TemplateChild<gtk::SearchEntry>,
@@ -109,6 +106,23 @@ mod imp {
             self.list.item(self.selected.get()).and_downcast()
         }
 
+        fn update_count_label(&self) {
+            let count = self.num_items.get();
+            let filtered_count = self.list.n_items();
+
+            if count == filtered_count {
+                self.count_label
+                    .set_text(&format!("{} Icons", count.to_string().replace('0', "no")));
+            } else {
+                self.count_label.set_text(&format!(
+                    "({:>padding$}/{}) Icons",
+                    filtered_count.to_string(),
+                    count,
+                    padding = count.to_string().len()
+                ));
+            }
+        }
+
         #[template_callback]
         fn filter_changed(&self) {
             self.filter.changed(gtk::FilterChange::Different);
@@ -135,24 +149,10 @@ mod imp {
         }
     }
 
-    fn handle_filter_pending(list: &gtk::FilterListModel, obj: &super::IconSelector) {
+    fn handle_filter_pending(obj: &super::IconSelector) {
         let imp = obj.imp();
-        let amount_pending = list.pending();
-
-        log::trace!("Filter Pending {}", amount_pending);
-
-        imp.scroll.vadjustment().set_value(1.0);
-        let num_items = imp.num_items.get() as f64;
-        imp.loading_progress
-            .set_fraction((num_items - amount_pending as f64) / num_items);
-
-        if amount_pending == 0 {
-            imp.loading.set_visible(false);
-            imp.view.set_opacity(1.0);
-        } else {
-            imp.loading.set_visible(true);
-            imp.view.set_opacity(0.5);
-        }
+        imp.scroll.vadjustment().set_value(0.0);
+        imp.update_count_label();
     }
 
     #[glib::derived_properties]
@@ -213,7 +213,7 @@ mod imp {
             filtered.set_incremental(true);
 
             let obj = self.obj().clone();
-            filtered.connect_pending_notify(move |list| handle_filter_pending(list, &obj));
+            filtered.connect_pending_notify(move |_| handle_filter_pending(&obj));
 
             let search_entry = self.search.get();
             self.sorter.set_sort_func(move |a, b| {
@@ -292,6 +292,7 @@ mod imp {
             self.list.set_model(Some(&sort));
             self.view.set_model(Some(&selection));
             self.view.set_factory(Some(&factory));
+            self.update_count_label();
         }
 
         fn dispose(&self) {
