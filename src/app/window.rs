@@ -1,3 +1,4 @@
+use super::APP_ID;
 use super::icon_details::IconDetails;
 use gtk::prelude::*;
 use gtk::{gio, glib};
@@ -175,6 +176,9 @@ glib::wrapper! {
 impl Window {
     pub fn new(app: &gtk::Application) -> Self {
         let window: Self = glib::Object::builder().property("application", app).build();
+        let icon_name = APP_ID.split(".").last().unwrap();
+
+        window.set_icon_name(Some(icon_name));
 
         window
     }
