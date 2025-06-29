@@ -16,6 +16,8 @@ mod imp {
 
     use super::*;
 
+    const MINIMUM_SIZE_BUFFER: i32 = 20;
+
     #[derive(CompositeTemplate, Properties, Debug, Default)]
     #[template(resource = "/codes/blaine/nett-icon-viewer/window.ui")]
     #[properties(wrapper_type = super::Window)]
@@ -91,14 +93,27 @@ mod imp {
                 let percentage =
                     paned.position() as f64 / paned.size(gtk::Orientation::Horizontal) as f64;
 
-                log::trace!("New split percentage: {}", percentage);
+                let start_child = paned.start_child().expect("Failed to get start child");
+                let (min_start_child_width, _, _, _) =
+                    start_child.measure(gtk::Orientation::Horizontal, -1);
 
-                obj.imp().split_percentage.set(percentage);
-                obj.notify_split_percentage();
+                let end_child = paned.end_child().expect("Failed to get end child");
+                let (min_end_child_width, _, _, _) =
+                    end_child.measure(gtk::Orientation::Horizontal, -1);
+
+                if (min_start_child_width + MINIMUM_SIZE_BUFFER) <= start_child.width()
+                    && (min_end_child_width + MINIMUM_SIZE_BUFFER) <= end_child.width()
+                {
+                    obj.imp().split_percentage.set(percentage);
+                    obj.notify_split_percentage();
+                }
             });
 
             // NOTE: Block the signal before the initial position is set
             paned.block_signal(&handler_id);
+
+            paned.set_shrink_start_child(false);
+            paned.set_shrink_end_child(false);
 
             self.split_percentage_handler_id
                 .set(handler_id)

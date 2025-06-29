@@ -64,10 +64,11 @@
                     <property name="orientation">horizontal</property>
                     <property name="valign">center</property>
                     <property name="spacing">2</property>
-										<property name="margin-top">6</property>
+                    <property name="margin-top">6</property>
                     <child>
                       <object class="GtkLabel">
                         <property name="label">Icon Size</property>
+                        <property name="valign">center</property>
                         <property name="mnemonic-widget">scale</property>
                       </object>
                     </child>
