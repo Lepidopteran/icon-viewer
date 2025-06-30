@@ -85,8 +85,47 @@ mod imp {
             self.obj().notify_aliases();
         }
 
-        fn render_icon(&self, name_changed: bool) {
-            let mut data = self.data.borrow_mut();
+        /// Sets the data of the icon.
+        /// This method will replace the current data with the new data.
+        /// After the data is replaced, the icon will be re-rendered.
+        pub fn set_data(&self, data: IconData, icon_size: u32) {
+            self.data.borrow_mut().name = data.name.to_string();
+            self.obj().notify_name();
+            self.replace_data(data);
+            self.obj().set_icon_size(icon_size);
+        }
+
+        fn replace_data(&self, data: IconData) {
+            let mut current_data = self.data.borrow_mut();
+            let mut notify = Vec::new();
+
+            for (name, changed) in [
+                ("aliases", current_data.aliases != data.aliases),
+                ("tags", current_data.tags != data.tags),
+                ("path", current_data.path != data.path),
+                ("symbolic", current_data.symbolic != data.symbolic),
+                ("symlink", current_data.symlink != data.symlink),
+                (
+                    "symlink-path",
+                    current_data.symlink_path != data.symlink_path,
+                ),
+            ] {
+                if changed {
+                    notify.push(name);
+                }
+            }
+
+            *current_data = data;
+
+            drop(current_data);
+
+            for n in notify {
+                self.obj().notify(n);
+            }
+        }
+
+        fn render_icon(&self, update_data: bool) {
+            let mut data = self.data.borrow().clone();
             let size = self.icon_size.get();
             let paintable = icon_theme().lookup_icon(
                 &data.name,
@@ -98,7 +137,7 @@ mod imp {
             );
 
             let outer = self.obj().clone();
-            if name_changed {
+            if update_data {
                 if let Some(path) = paintable.file().and_then(|f| f.path()) {
                     let is_symlink = std::fs::symlink_metadata(&path)
                         .map(|m| m.file_type().is_symlink())
@@ -118,14 +157,7 @@ mod imp {
 
                 data.symbolic = paintable.is_symbolic();
 
-                // HACK: need to drop data so I don't get a BorrowError.
-                drop(data);
-
-                outer.notify_symlink_path();
-                outer.notify_path();
-                outer.notify_symlink();
-                outer.notify_tags();
-                outer.notify_symbolic();
+                self.replace_data(data);
             }
 
             outer.set_paintable(paintable);
@@ -248,6 +280,13 @@ impl IconObject {
             .build();
 
         icon
+    }
+
+    pub fn from_data(data: IconData, icon_size: u32) -> Self {
+        let obj: Self = glib::Object::builder().build();
+        obj.imp().set_data(data, icon_size);
+
+        obj
     }
 
     pub fn add_aliases(&self, aliases: Vec<String>) {
