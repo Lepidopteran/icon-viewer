@@ -116,6 +116,7 @@ mod imp {
         type ParentType = gtk::Widget;
 
         fn class_init(klass: &mut Self::Class) {
+            klass.set_css_name("icon-selector");
             klass.bind_template();
             klass.bind_template_callbacks();
         }
