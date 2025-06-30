@@ -43,6 +43,7 @@ mod imp {
         type ParentType = gtk::Widget;
 
         fn class_init(klass: &mut Self::Class) {
+            klass.set_css_name("icon-cell");
             klass.bind_template();
         }
 
