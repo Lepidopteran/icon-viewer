@@ -40,8 +40,33 @@
                   </object>
                 </child>
                 <child>
-                  <object class="GtkLabel" id="label">
-                    <property name="ellipsize">end</property>
+                  <object class="GtkButton" id="copy_button">
+                    <signal handler="copy_icon" name="clicked" swapped="true"></signal>
+                    <property name="margin-top">4</property>
+                    <property name="margin-bottom">4</property>
+                    <property name="halign">center</property>
+                    <child>
+                      <object class="GtkBox">
+                        <property name="orientation">horizontal</property>
+                        <property name="margin-start">8</property>
+                        <property name="margin-end">8</property>
+                        <property name="spacing">4</property>
+                        <child>
+                          <object class="GtkLabel" id="label">
+                            <property name="ellipsize">end</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkImage">
+                            <property name="icon-name">edit-copy</property>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                    <style>
+                      <class name="flat"></class>
+                      <class name="circular"></class>
+                    </style>
                   </object>
                 </child>
                 <child>

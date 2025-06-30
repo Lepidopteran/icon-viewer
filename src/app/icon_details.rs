@@ -83,7 +83,18 @@ mod imp {
     }
 
     #[gtk::template_callbacks]
-    impl IconDetails {}
+    impl IconDetails {
+        #[template_callback]
+        fn copy_icon(&self) {
+            let name = self.label.get().text();
+            let clipboard = gtk::gdk::Display::default()
+                .expect("Failed to get display")
+                .clipboard();
+
+            clipboard.set_text(&name);
+            log::debug!("Copied \"{}\" to clipboard", name);
+        }
+    }
 
     #[glib::derived_properties]
     impl ObjectImpl for IconDetails {
