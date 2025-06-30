@@ -1,8 +1,6 @@
 use gtk::glib;
 
-use nett_icon_viewer::{
-    icon::{IconObject},
-};
+use nett_icon_viewer::icon::IconObject;
 
 use super::data_row::DataRow;
 
@@ -18,7 +16,7 @@ mod imp {
         subclass::prelude::*,
     };
 
-    use super::{*};
+    use super::*;
 
     #[derive(CompositeTemplate, Properties, Default)]
     #[properties(wrapper_type = super::IconDetails)]
@@ -60,7 +58,22 @@ mod imp {
         #[property(get, set)]
         pub icon_name: RefCell<String>,
 
+        #[property(get, set = set_icon, nullable, construct)]
         icon: RefCell<Option<IconObject>>,
+        bindings: RefCell<Vec<glib::Binding>>,
+    }
+
+    fn set_icon(imp: &IconDetails, icon: Option<IconObject>) {
+        if let Some(icon) = icon.as_ref() {
+            imp.bind_icon(icon);
+            imp.stack.set_visible_child_name("details");
+        } else {
+            imp.unbind_icon();
+            imp.stack.set_visible_child_name("empty");
+        }
+
+        *imp.icon.borrow_mut() = icon;
+        imp.obj().notify_icon();
     }
 
     #[glib::object_subclass]
@@ -84,6 +97,85 @@ mod imp {
 
     #[gtk::template_callbacks]
     impl IconDetails {
+        fn bind_icon(&self, icon: &IconObject) {
+            let mut bindings = self.bindings.borrow_mut();
+            let imp = self.obj();
+
+            let label = &self.label.get();
+            let label_binding = icon
+                .bind_property("name", label, "label")
+                .sync_create()
+                .build();
+
+            bindings.push(label_binding);
+
+            let picture = &self.picture.get();
+            let picture_binding = icon
+                .bind_property("paintable", picture, "paintable")
+                .sync_create()
+                .build();
+
+            bindings.push(picture_binding);
+
+            let icon_size_binding = imp
+                .bind_property("icon-size", icon, "icon-size")
+                .sync_create()
+                .build();
+
+            bindings.push(icon_size_binding);
+
+            let symbolic_row = &self.symbolic_row.get();
+            let symbolic_row_binding = icon
+                .bind_property("symbolic", symbolic_row, "value")
+                .transform_to(|_, v: bool| Some(v.to_string().to_value()))
+                .sync_create()
+                .build();
+
+            bindings.push(symbolic_row_binding);
+
+            let tags_row = &self.tags_row.get();
+            let tags_row_binding = icon
+                .bind_property("tags", tags_row, "value")
+                .transform_to(|_, v: Vec<String>| Some(v.join(", ").to_value()))
+                .sync_create()
+                .build();
+
+            bindings.push(tags_row_binding);
+
+            let path_row = &self.path_row.get();
+            let path_row_binding = icon
+                .bind_property("path", path_row, "value")
+                .transform_to(|_, v: String| Some(v.to_value()))
+                .sync_create()
+                .build();
+
+            bindings.push(path_row_binding);
+
+            let symlink_row = &self.symlink_row.get();
+            let symlink_row_binding = icon
+                .bind_property("symlink", symlink_row, "value")
+                .transform_to(|_, v: bool| Some(v.to_string().to_value()))
+                .sync_create()
+                .build();
+
+            bindings.push(symlink_row_binding);
+
+            let symlink_path = &self.symlink_path_row.get();
+            let symlink_path_binding = icon
+                .bind_property("symlink-path", symlink_path, "value")
+                .transform_to(|_, v: Option<String>| Some(v.unwrap_or_default().to_value()))
+                .sync_create()
+                .build();
+
+            bindings.push(symlink_path_binding);
+        }
+
+        fn unbind_icon(&self) {
+            for binding in self.bindings.borrow_mut().drain(..) {
+                binding.unbind();
+            }
+        }
+
         #[template_callback]
         fn copy_icon(&self) {
             let name = self.label.get().text();
@@ -119,69 +211,16 @@ mod imp {
             outer.connect_icon_name_notify(move |icon_details| {
                 let icon_name = icon_details.icon_name();
                 let icon_size = icon_details.icon_size();
-                let inner = icon_details.imp();
-                let mut current_icon = inner.icon.borrow_mut();
 
-                if current_icon.is_none() && icon_name.is_empty() {
-                    return;
-                }
-
-                if let Some(icon) = current_icon.as_ref() {
+                if let Some(icon) = icon_details.icon().as_ref() {
                     if icon_name.is_empty() {
-                        inner.stack.set_visible_child_name("empty");
-                        inner.icon.replace(None);
-                        return;
+                        return icon_details.set_icon(None::<IconObject>);
                     }
+
                     icon.set_name(icon_name);
                 } else {
                     let icon = IconObject::new(&icon_name, icon_size);
-                    let _ = icon
-                        .bind_property("paintable", &picture, "paintable")
-                        .sync_create()
-                        .build();
-
-                    let _ = icon_details
-                        .bind_property("icon-size", &icon, "icon-size")
-                        .sync_create()
-                        .build();
-
-                    let symbolic = &inner.symbolic_row.get();
-                    let _ = icon
-                        .bind_property("symbolic", symbolic, "value")
-                        .transform_to(|_, v: bool| Some(v.to_string().to_value()))
-                        .sync_create()
-                        .build();
-
-                    let tags = &inner.tags_row.get();
-                    let _ = icon
-                        .bind_property("tags", tags, "value")
-                        .transform_to(|_, v: Vec<String>| Some(v.join(", ").to_value()))
-                        .sync_create()
-                        .build();
-
-                    let path = &inner.path_row.get();
-                    let _ = icon
-                        .bind_property("path", path, "value")
-                        .transform_to(|_, v: String| Some(v.to_value()))
-                        .sync_create()
-                        .build();
-
-                    let symlink = &inner.symlink_row.get();
-                    let _ = icon
-                        .bind_property("symlink", symlink, "value")
-                        .transform_to(|_, v: bool| Some(v.to_string().to_value()))
-                        .sync_create()
-                        .build();
-
-                    let symlink_path = &inner.symlink_path_row.get();
-                    let _ = icon
-                        .bind_property("symlink-path", symlink_path, "value")
-                        .transform_to(|_, v: Option<String>| Some(v.unwrap_or_default().to_value()))
-                        .sync_create()
-                        .build();
-
-                    current_icon.replace(icon);
-                    inner.stack.set_visible_child_name("details");
+                    icon_details.set_icon(Some(icon));
                 }
             });
         }
