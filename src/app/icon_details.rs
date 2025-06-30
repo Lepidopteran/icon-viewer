@@ -72,6 +72,7 @@ mod imp {
         fn class_init(klass: &mut Self::Class) {
             DataRow::ensure_type();
 
+            klass.set_css_name("icon-details");
             klass.bind_template();
             klass.bind_template_callbacks();
         }
