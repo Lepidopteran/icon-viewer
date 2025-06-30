@@ -2,6 +2,7 @@ use gtk::glib;
 use gtk::glib::subclass::prelude::*;
 
 use super::{
+    FilterWidget,
     icon::{IconObject, IconWidget},
     icon_theme,
 };
@@ -47,6 +48,9 @@ mod imp {
 
         #[template_child]
         pub search: TemplateChild<gtk::SearchEntry>,
+
+        #[template_child]
+        pub filter_widget: TemplateChild<FilterWidget>,
 
         #[property(get, set = set_icon_size, construct, default = DEFAULT_ICON_SIZE)]
         pub icon_size: Cell<u32>,
@@ -222,6 +226,32 @@ mod imp {
                             .included_tags()
                             .iter()
                             .all(|tag| icon.tags().contains(tag))
+                    }),
+                    Box::new(|icon: &IconObject, selector: &super::IconSelector| {
+                        let included_categories: Vec<&str> = selector
+                            .imp()
+                            .filter_widget
+                            .included_categories()
+                            .iter()
+                            .filter_map(|c| match c.as_str() {
+                                "Actions" => Some("actions"),
+                                "Animations" => Some("animations"),
+                                "Applications" => Some("apps"),
+                                "Categories" => Some("categories"),
+                                "Devices" => Some("devices"),
+                                "Emblems" => Some("emblems"),
+                                "Emotes" => Some("emotes"),
+                                "International" => Some("intl"),
+                                "MimeTypes" => Some("mimetypes"),
+                                "Places" => Some("places"),
+                                "Status" => Some("status"),
+                                _ => None,
+                            })
+                            .collect();
+
+                        icon.tags().iter().enumerate().any(|(index, tag)| {
+                            included_categories.iter().any(|c| tag.starts_with(c) && index != 0)
+                        })
                     }),
                 ];
 

@@ -15,11 +15,33 @@
             <property name="margin-end">4</property>
             <property name="margin-top">4</property>
             <property name="margin-bottom">4</property>
+            <property name="spacing">4</property>
             <property name="hexpand">true</property>
             <child>
               <object class="GtkSearchEntry" id="search">
                 <signal handler="filter_changed" name="search_changed" swapped="true"></signal>
                 <property name="hexpand">true</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkMenuButton">
+								<property name="label">Filters</property>
+                <property name="popover">
+                  <object class="GtkPopover">
+                    <child>
+                      <object class="GtkScrolledWindow">
+												<property name="propagate-natural-width">true</property>
+												<property name="propagate-natural-height">true</property>
+												<property name="max-content-height">400</property>
+                        <child>
+                          <object class="NettIconViewerSelectorFilters" id="filter_widget">
+                            <signal handler="filter_changed" name="notify::included-categories" swapped="true"></signal>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </property>
               </object>
             </child>
           </object>
@@ -28,16 +50,22 @@
           <object class="GtkSeparator" id="separator"></object>
         </child>
         <child>
-          <object class="GtkScrolledWindow" id="scroll">
-            <property name="propagate-natural-width">true</property>
-            <property name="propagate-natural-height">true</property>
-            <property name="hscrollbar-policy">never</property>
+          <object class="GtkBox">
+            <property name="orientation">horizontal</property>
             <child>
-              <object class="GtkGridView" id="view">
-                <signal handler="view_activate" name="activate" swapped="true"></signal>
-                <property name="single-click-activate">true</property>
+              <object class="GtkScrolledWindow" id="scroll">
+                <property name="propagate-natural-width">true</property>
+                <property name="propagate-natural-height">true</property>
+                <property name="hscrollbar-policy">never</property>
                 <property name="hexpand">true</property>
-                <property name="vexpand">true</property>
+                <child>
+                  <object class="GtkGridView" id="view">
+                    <signal handler="view_activate" name="activate" swapped="true"></signal>
+                    <property name="single-click-activate">true</property>
+                    <property name="hexpand">true</property>
+                    <property name="vexpand">true</property>
+                  </object>
+                </child>
               </object>
             </child>
           </object>
