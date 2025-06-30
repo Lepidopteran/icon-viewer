@@ -13,8 +13,7 @@
           <object class="GtkPaned" id="paned">
             <property name="orientation">horizontal</property>
             <child type="start">
-              <object class="NettIconViewerIconSelector" id="view">
-              </object>
+              <object class="NettIconViewerIconSelector" id="view"></object>
             </child>
             <child>
               <object class="GtkScrolledWindow">
