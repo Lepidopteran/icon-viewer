@@ -88,6 +88,9 @@ mod imp {
         fn constructed(&self) {
             self.parent_constructed();
 
+            self.label
+                .set_text(format!("Nett Icon Viewer v{}", env!("CARGO_PKG_VERSION")).as_str());
+
             let obj = self.obj().clone();
             let paned = self.paned.get();
             let handler_id = paned.connect_position_notify(move |paned| {

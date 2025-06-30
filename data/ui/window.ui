@@ -31,14 +31,16 @@
           </object>
         </child>
         <child>
-          <object class="GtkSeparator">
-          </object>
+          <object class="GtkSeparator"></object>
         </child>
         <child>
           <object class="GtkCenterBox">
             <property name="orientation">horizontal</property>
             <child type="start">
               <object class="GtkLabel" id="label">
+                <property name="margin-start">8</property>
+                <property name="margin-top">4</property>
+                <property name="margin-bottom">4</property>
               </object>
             </child>
           </object>
