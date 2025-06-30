@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+
+Name=Nett Icon Viewer
+Comment=View all the icons in gtk themes
+Categories=Development;
+
+Icon=nett-icon-viewer
+Exec=nett-icon-viewer
+Terminal=false
