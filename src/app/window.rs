@@ -132,7 +132,10 @@ mod imp {
                     .model()
                     .and_then(|m| m.item(index).and_downcast::<IconObject>())
                 {
-                    details.set_icon_name(icon.name());
+                    details.set_icon(Some(IconObject::from_data(
+                        icon.data().clone(),
+                        details.icon_size(),
+                    )));
                 }
             });
         }
