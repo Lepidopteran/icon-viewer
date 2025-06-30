@@ -24,7 +24,7 @@
               </object>
             </child>
             <child>
-              <object class="GtkMenuButton">
+							<object class="GtkMenuButton">
 								<property name="label">Filters</property>
                 <property name="popover">
                   <object class="GtkPopover">
