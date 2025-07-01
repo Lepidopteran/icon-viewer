@@ -229,29 +229,13 @@ mod imp {
                             .all(|tag| icon.tags().contains(tag))
                     }),
                     Box::new(|icon: &IconObject, selector: &super::IconSelector| {
-                        let included_categories: Vec<&str> = selector
-                            .imp()
-                            .filter_widget
-                            .included_categories()
-                            .iter()
-                            .filter_map(|c| match c.as_str() {
-                                "Actions" => Some("actions"),
-                                "Animations" => Some("animations"),
-                                "Applications" => Some("apps"),
-                                "Categories" => Some("categories"),
-                                "Devices" => Some("devices"),
-                                "Emblems" => Some("emblems"),
-                                "Emotes" => Some("emotes"),
-                                "International" => Some("intl"),
-                                "MimeTypes" => Some("mimetypes"),
-                                "Places" => Some("places"),
-                                "Status" => Some("status"),
-                                _ => None,
-                            })
-                            .collect();
+                        let included_categories =
+                            selector.imp().filter_widget.included_categories();
 
                         icon.tags().iter().enumerate().any(|(index, tag)| {
-                            included_categories.iter().any(|c| tag.starts_with(c) && index != 0)
+                            included_categories
+                                .iter()
+                                .any(|c| tag.starts_with(c) && index != 0)
                         })
                     }),
                 ];

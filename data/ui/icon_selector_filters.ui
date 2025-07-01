@@ -1,20 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
-  <object class="GtkStringList" id="categories">
-    <items>
-      <item>Actions</item>
-      <item>Animations</item>
-      <item>Applications</item>
-      <item>Categories</item>
-      <item>Devices</item>
-      <item>Emblems</item>
-      <item>Emotes</item>
-      <item>International</item>
-      <item>MimeTypes</item>
-      <item>Places</item>
-      <item>Status</item>
-    </items>
-  </object>
   <template class="NettIconViewerSelectorFilters" parent="GtkWidget">
     <property name="hexpand">true</property>
     <property name="vexpand">true</property>
@@ -67,11 +52,10 @@
               </object>
             </child>
             <child>
-              <object class="GtkListBox" id="category_list">
+              <object class="GtkBox" id="category_box">
+                <property name="orientation">vertical</property>
                 <property name="margin-start">8</property>
                 <property name="margin-top">4</property>
-                <signal handler="category_list_row_activated" name="row-activated"></signal>
-                <property name="selection-mode">none</property>
               </object>
             </child>
           </object>

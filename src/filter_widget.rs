@@ -1,18 +1,17 @@
 use gtk::glib;
-use gtk::glib::object::ObjectExt;
 use gtk::glib::subclass::prelude::*;
 
 mod imp {
-    use std::cell::{Cell, RefCell};
+    use std::cell::RefCell;
     use std::collections::HashSet;
 
     use gtk::glib::{Properties, subclass::InitializingObject};
+    use gtk::prelude::*;
     use gtk::subclass::widget::{CompositeTemplateCallbacksClass, WidgetImplExt};
     use gtk::subclass::widget::{
         CompositeTemplateClass, CompositeTemplateInitializingExt, WidgetClassExt, WidgetImpl,
     };
     use gtk::{Allocation, CompositeTemplate, TemplateChild};
-    use gtk::{StringObject, prelude::*};
 
     use super::*;
 
@@ -21,13 +20,10 @@ mod imp {
     #[template(resource = "/codes/blaine/nett-icon-viewer/icon_selector_filters.ui")]
     pub struct FilterWidget {
         #[template_child]
-        pub categories: TemplateChild<gtk::StringList>,
-
-        #[template_child]
         pub layout: TemplateChild<gtk::Box>,
 
         #[template_child]
-        pub category_list: TemplateChild<gtk::ListBox>,
+        pub category_box: TemplateChild<gtk::Box>,
 
         #[property(get, set = set_included_categories)]
         pub included_categories: RefCell<Vec<String>>,
@@ -91,36 +87,40 @@ mod imp {
         fn constructed(&self) {
             self.parent_constructed();
 
-            let categories = self.categories.get();
+            for (name, value) in [
+                ("Actions", "actions"),
+                ("Animations", "animations"),
+                ("Applications", "apps"),
+                ("Categories", "categories"),
+                ("Devices", "devices"),
+                ("Emblems", "emblems"),
+                ("Emotes", "emotes"),
+                ("International", "intl"),
+                ("MimeTypes", "mimetypes"),
+                ("Places", "places"),
+                ("Status", "status"),
+            ] {
+                let check = gtk::CheckButton::builder().label(name).active(true).build();
+                self.included_categories
+                    .borrow_mut()
+                    .push(value.to_string());
 
-            let obj = self.obj().clone();
-            self.category_list
-                .bind_model(Some(&categories), move |item| {
-                    let obj = obj.clone();
-                    let category = item
-                        .downcast_ref::<StringObject>()
-                        .map(|s| s.string().to_string())
-                        .unwrap();
+                let obj = self.obj().clone();
+                obj.bind_property("included-categories", &check, "active")
+                    .transform_to(move |_, v: Vec<String>| Some(v.contains(&value.to_string())))
+                    .build();
 
-                    obj.imp().add_category(&category);
-
-                    let check = gtk::CheckButton::builder().label(&category).build();
-                    let category_clone = category.clone();
-                    obj.bind_property("included-categories", &check, "active").transform_to(move |_, v: Vec<String>| {
-                        Some(v.contains(&category_clone))
-                    }).build();
-
-                    let category_clone = category.clone();
-                    check.connect_toggled(move |check| {
-                        if check.is_active() {
-                            obj.imp().add_category(&category_clone);
-                        } else {
-                            obj.imp().remove_category(&category_clone);
-                        }
-                    });
-
-                    check.into()
+                let obj = self.obj().clone();
+                check.connect_toggled(move |check| {
+                    if check.is_active() {
+                        obj.imp().add_category(value);
+                    } else {
+                        obj.imp().remove_category(value);
+                    }
                 });
+
+                self.category_box.append(&check);
+            }
         }
 
         fn dispose(&self) {
