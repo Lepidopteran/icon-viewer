@@ -70,6 +70,8 @@ mod imp {
         #[property(get)]
         pub num_items: Cell<u32>,
 
+        #[property(get, nullable)]
+        icons: RefCell<Option<ListStore>>,
         sorter: gtk::CustomSorter,
         filter: gtk::CustomFilter,
         list: gtk::SortListModel,
@@ -78,7 +80,7 @@ mod imp {
     fn set_icon_size(imp: &IconSelector, value: u32) {
         imp.icon_size.set(value);
 
-        if let Some(model) = imp.list.model() {
+        if let Some(model) = imp.icons.borrow().as_ref() {
             for item in model.into_iter().flatten() {
                 let icon = item.downcast_ref::<IconObject>().unwrap();
                 icon.set_icon_size(value);
@@ -121,6 +123,10 @@ mod imp {
     impl IconSelector {
         pub fn get_selected_icon(&self) -> Option<IconObject> {
             self.list.item(self.selected.get()).and_downcast()
+        }
+
+        fn icons(&self) -> ListStore {
+            self.icons.borrow().clone().expect("Icons not set")
         }
 
         fn update_count_label(&self) {
@@ -188,8 +194,10 @@ mod imp {
             self.obj().notify_num_items();
 
             let store = ListStore::new::<IconObject>();
-
             store.extend_from_slice(&icons);
+
+            self.icons.replace(Some(store));
+            self.obj().notify_icons();
 
             let obj = self.obj().clone();
             self.filter.set_filter_func(move |item| {
@@ -243,7 +251,7 @@ mod imp {
                 matches
             });
 
-            let filtered = gtk::FilterListModel::new(Some(store), Some(self.filter.clone()));
+            let filtered = gtk::FilterListModel::new(Some(self.icons()), Some(self.filter.clone()));
             filtered.set_incremental(true);
 
             let obj = self.obj().clone();
