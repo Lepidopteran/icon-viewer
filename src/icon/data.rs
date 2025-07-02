@@ -62,15 +62,25 @@ mod imp {
     }
 
     fn set_name(imp: &IconObject, name: &str) {
-        imp.data.borrow_mut().name = name.to_string();
-        imp.obj().notify_name();
-        imp.render_icon(true);
+        if imp.data.borrow().name != name {
+            imp.data.borrow_mut().name = name.to_string();
+            imp.obj().notify_name();
+            imp.render_icon(true);
+        } else {
+            imp.data.borrow_mut().name = name.to_string();
+            imp.obj().notify_name();
+        }
     }
 
     fn set_icon_size(imp: &IconObject, icon_size: u32) {
-        imp.icon_size.set(icon_size);
-        imp.obj().notify_icon_size();
-        imp.render_icon(false);
+        if imp.icon_size.get() != icon_size {
+            imp.icon_size.set(icon_size);
+            imp.obj().notify_icon_size();
+            imp.render_icon(false);
+        } else {
+            imp.icon_size.set(icon_size);
+            imp.obj().notify_icon_size();
+        }
     }
 
     impl IconObject {
