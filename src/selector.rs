@@ -10,7 +10,7 @@ use super::{
 const DEFAULT_ICON_SIZE: u32 = 64;
 
 mod imp {
-    use std::cell::{Cell, RefCell};
+    use std::{cell::{Cell, RefCell}, rc::Rc};
 
     use gtk::{
         Allocation, CompositeTemplate, ListItem, SignalListItemFactory, SingleSelection,
@@ -70,6 +70,8 @@ mod imp {
         #[property(get)]
         pub num_items: Cell<u32>,
 
+        displayed_icons: Rc<RefCell<Vec<IconWidget>>>,
+
         #[property(get, nullable)]
         icons: RefCell<Option<ListStore>>,
         sorter: gtk::CustomSorter,
@@ -80,11 +82,8 @@ mod imp {
     fn set_icon_size(imp: &IconSelector, value: u32) {
         imp.icon_size.set(value);
 
-        if let Some(model) = imp.icons.borrow().as_ref() {
-            for item in model.into_iter().flatten() {
-                let icon = item.downcast_ref::<IconObject>().unwrap();
-                icon.set_icon_size(value);
-            }
+        for cell in imp.displayed_icons.borrow().iter() {
+            cell.set_icon_size(value);
         }
 
         imp.obj().notify_icon_size();
@@ -294,6 +293,9 @@ mod imp {
             });
 
             let search = self.search.get();
+
+            let displayed_icons = self.displayed_icons.clone();
+            let obj = self.obj().clone();
             factory.connect_bind(move |_, list_item| {
                 let icon = list_item
                     .downcast_ref::<ListItem>()
@@ -309,9 +311,12 @@ mod imp {
                     .and_downcast::<IconWidget>()
                     .expect("The child has to be a `IconWidget`.");
 
-                cell.bind(&icon, search.text().as_ref());
+                cell.bind(&icon, search.text().as_ref(), obj.icon_size());
+
+                displayed_icons.borrow_mut().push(cell);
             });
 
+            let visible_cells = self.displayed_icons.clone();
             factory.connect_unbind(move |_, list_item| {
                 let cell = list_item
                     .downcast_ref::<ListItem>()
@@ -319,6 +324,10 @@ mod imp {
                     .child()
                     .and_downcast::<IconWidget>()
                     .expect("The child has to be a `IconWidget`.");
+
+                visible_cells
+                    .borrow_mut()
+                    .retain(|c| *c != cell);
 
                 cell.unbind();
             });

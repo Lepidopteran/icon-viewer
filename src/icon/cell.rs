@@ -96,10 +96,14 @@ impl IconWidget {
         glib::Object::builder().build()
     }
 
-    pub fn bind(&self, icon: &IconObject, search_text: &str) {
+    pub fn bind(&self, icon: &IconObject, search_text: &str, icon_size: u32) {
         let image = self.imp().image.clone();
         let label = self.imp().label.clone();
         let mut bindings = self.imp().bindings.borrow_mut();
+
+        if icon_size != self.icon_size() {
+            self.set_icon_size(icon_size);
+        }
 
         let image_binding = icon
             .bind_property("paintable", &image, "paintable")
@@ -114,6 +118,13 @@ impl IconWidget {
             .build();
 
         bindings.push(label_binding);
+
+        let icon_size_binding = self
+            .bind_property("icon-size", icon, "icon-size")
+            .sync_create()
+            .build();
+
+        bindings.push(icon_size_binding);
 
         let text = label.text().to_string();
         let matcher = SkimMatcherV2::default();
