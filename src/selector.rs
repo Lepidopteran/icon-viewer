@@ -2,7 +2,7 @@ use gtk::glib;
 use gtk::glib::subclass::prelude::*;
 
 use super::{
-    FilterWidget,
+    FilterMode, FilterWidget,
     icon::{IconObject, IconWidget},
     icon_theme,
 };
@@ -61,9 +61,6 @@ mod imp {
         #[property(get, set)]
         pub copy_on_activate: Cell<bool>,
 
-        #[property(get, set = set_group_symlinks, construct, default = true)]
-        pub group_symlinks: Cell<bool>,
-
         #[property(get, set = set_include_tags_in_search, construct, default = true)]
         pub include_tags_in_search: Cell<bool>,
 
@@ -95,12 +92,6 @@ mod imp {
         imp.include_tags_in_search.set(value);
         imp.filter_changed();
         imp.obj().notify_include_tags_in_search();
-    }
-
-    fn set_group_symlinks(imp: &IconSelector, value: bool) {
-        imp.group_symlinks.set(value);
-        imp.filter_changed();
-        imp.obj().notify_group_symlinks();
     }
 
     fn set_included_tags(imp: &IconSelector, value: Vec<String>) {
@@ -216,10 +207,17 @@ mod imp {
 
                 let filters: Vec<FilterFunction> = vec![
                     Box::new(|icon: &IconObject, selector: &super::IconSelector| {
-                        if selector.group_symlinks() {
-                            !icon.symlink()
-                        } else {
-                            true
+                        match selector.imp().filter_widget.symlink_filter_mode() {
+                            FilterMode::Is => icon.symlink(),
+                            FilterMode::Not => !icon.symlink(),
+                            FilterMode::Either => true,
+                        }
+                    }),
+                    Box::new(|icon: &IconObject, selector: &super::IconSelector| {
+                        match selector.imp().filter_widget.symbolic_filter_mode() {
+                            FilterMode::Is => icon.symbolic(),
+                            FilterMode::Not => !icon.symbolic(),
+                            FilterMode::Either => true,
                         }
                     }),
                     Box::new(|icon: &IconObject, selector: &super::IconSelector| {

@@ -1,6 +1,15 @@
 use gtk::glib;
 use gtk::glib::subclass::prelude::*;
 
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash, Default, glib::Enum)]
+#[enum_type(name = "NettIconViewerFilterDisplayMode")]
+pub enum FilterMode {
+    #[default]
+    Is,
+    Not,
+    Either,
+}
+
 mod imp {
     use std::cell::RefCell;
     use std::collections::HashSet;
@@ -20,13 +29,39 @@ mod imp {
     #[template(resource = "/codes/blaine/nett-icon-viewer/icon_selector_filters.ui")]
     pub struct FilterWidget {
         #[template_child]
-        pub layout: TemplateChild<gtk::Box>,
+        layout: TemplateChild<gtk::Box>,
 
         #[template_child]
-        pub category_box: TemplateChild<gtk::Box>,
+        category_box: TemplateChild<gtk::Box>,
+
+        #[template_child]
+        symbolic_check: TemplateChild<gtk::CheckButton>,
+
+        #[template_child]
+        symlink_check: TemplateChild<gtk::CheckButton>,
+
+        #[property(get, set = set_symlink_filter_mode, construct, builder(FilterMode::Not))]
+        pub symlink_filter_mode: RefCell<FilterMode>,
+
+        #[property(get, set = set_symbolic_filter_mode, construct, builder(FilterMode::Either))]
+        pub symbolic_filter_mode: RefCell<FilterMode>,
 
         #[property(get, set = set_included_categories)]
         pub included_categories: RefCell<Vec<String>>,
+    }
+
+    fn set_symlink_filter_mode(imp: &FilterWidget, mode: FilterMode) {
+        map_filter_mode_to_check(&imp.symlink_check, &mode);
+
+        *imp.symlink_filter_mode.borrow_mut() = mode;
+        imp.obj().notify_symlink_filter_mode();
+    }
+
+    fn set_symbolic_filter_mode(imp: &FilterWidget, mode: FilterMode) {
+        map_filter_mode_to_check(&imp.symbolic_check, &mode);
+
+        *imp.symbolic_filter_mode.borrow_mut() = mode;
+        imp.obj().notify_symbolic_filter_mode();
     }
 
     fn set_included_categories(imp: &FilterWidget, included_categories: Vec<String>) {
@@ -41,13 +76,29 @@ mod imp {
     #[gtk::template_callbacks]
     impl FilterWidget {
         #[template_callback]
-        fn category_list_row_activated(_: &gtk::ListBox, row: &gtk::ListBoxRow) {
-            let child = row.child().expect("Failed to get child");
-            let check = child
-                .downcast_ref::<gtk::CheckButton>()
-                .expect("Failed to get check button");
+        fn symbolic_toggled(&self) {
+            let obj = self.obj();
 
-            check.set_active(!check.is_active());
+            let new_mode = match obj.symbolic_filter_mode() {
+                FilterMode::Is => FilterMode::Not,
+                FilterMode::Not => FilterMode::Either,
+                FilterMode::Either => FilterMode::Is,
+            };
+
+            obj.set_symbolic_filter_mode(new_mode);
+        }
+
+        #[template_callback]
+        fn symlink_toggled(&self) {
+            let obj = self.obj();
+
+            let new_mode = match obj.symlink_filter_mode() {
+                FilterMode::Is => FilterMode::Not,
+                FilterMode::Not => FilterMode::Either,
+                FilterMode::Either => FilterMode::Is,
+            };
+
+            obj.set_symlink_filter_mode(new_mode);
         }
 
         fn remove_category(&self, category: &str) {
@@ -63,6 +114,11 @@ mod imp {
 
             set_included_categories(self, included_categories);
         }
+    }
+
+    fn map_filter_mode_to_check(check: &gtk::CheckButton, mode: &FilterMode) {
+        check.set_active(*mode == FilterMode::Is);
+        check.set_inconsistent(*mode == FilterMode::Either);
     }
 
     #[glib::object_subclass]
@@ -86,6 +142,10 @@ mod imp {
     impl ObjectImpl for FilterWidget {
         fn constructed(&self) {
             self.parent_constructed();
+            let obj = self.obj().clone();
+
+            map_filter_mode_to_check(&self.symbolic_check, &obj.symbolic_filter_mode());
+            map_filter_mode_to_check(&self.symlink_check, &obj.symlink_filter_mode());
 
             for (name, value) in [
                 ("Actions", "actions"),

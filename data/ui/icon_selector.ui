@@ -24,18 +24,20 @@
               </object>
             </child>
             <child>
-							<object class="GtkMenuButton">
-								<property name="label">Filters</property>
+              <object class="GtkMenuButton">
+                <property name="label">Filters</property>
                 <property name="popover">
                   <object class="GtkPopover">
                     <child>
                       <object class="GtkScrolledWindow">
-												<property name="propagate-natural-width">true</property>
-												<property name="propagate-natural-height">true</property>
-												<property name="max-content-height">400</property>
+                        <property name="propagate-natural-width">true</property>
+                        <property name="propagate-natural-height">true</property>
+                        <property name="max-content-height">400</property>
                         <child>
                           <object class="NettIconViewerSelectorFilters" id="filter_widget">
                             <signal handler="filter_changed" name="notify::included-categories" swapped="true"></signal>
+                            <signal handler="filter_changed" name="notify::symbolic-filter-mode" swapped="true"></signal>
+                            <signal handler="filter_changed" name="notify::symlink-filter-mode" swapped="true"></signal>
                           </object>
                         </child>
                       </object>

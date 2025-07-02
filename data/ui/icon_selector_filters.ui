@@ -31,6 +31,18 @@
                 <property name="margin-top">4</property>
                 <property name="margin-bottom">4</property>
                 <property name="orientation">vertical</property>
+                <child>
+                  <object class="GtkCheckButton" id="symlink_check">
+										<signal handler="symlink_toggled" name="toggled" swapped="true"></signal>
+                    <property name="label">Symlinks</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkCheckButton" id="symbolic_check">
+										<signal handler="symbolic_toggled" name="toggled" swapped="true"></signal>
+                    <property name="label">Symbolic</property>
+                  </object>
+                </child>
               </object>
             </child>
           </object>
