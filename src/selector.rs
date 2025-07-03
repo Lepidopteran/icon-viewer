@@ -10,18 +10,23 @@ use super::{
 const DEFAULT_ICON_SIZE: u32 = 64;
 
 mod imp {
-    use std::{cell::{Cell, RefCell}, rc::Rc};
+    use std::{
+        cell::{Cell, RefCell},
+        rc::Rc,
+    };
 
     use gtk::{
         Allocation, CompositeTemplate, ListItem, SignalListItemFactory, SingleSelection,
         TemplateChild,
-        gio::ListStore,
+        gio::{self, ListStore},
         glib::{Properties, subclass::InitializingObject},
         prelude::*,
         subclass::prelude::*,
     };
 
     use fuzzy_matcher::{FuzzyMatcher, skim::SkimMatcherV2};
+
+    use crate::icon::IconData;
 
     use super::*;
 
@@ -189,11 +194,56 @@ mod imp {
                 .map(|n| IconObject::new(n, self.icon_size.get()))
                 .collect::<Vec<_>>();
 
+            let data = icons
+                .iter()
+                .map(|icon| icon.data().clone())
+                .collect::<Vec<_>>();
+
+            let (alias_tx, alias_rx) = async_channel::bounded::<(String, Vec<String>)>(1);
+            gio::spawn_blocking(move || {
+                let (symlinks, non_symlinks): (Vec<_>, Vec<_>) =
+                    data.iter().partition(|data| data.symlink);
+
+                for icon in non_symlinks.iter() {
+                    let aliases: Vec<_> = symlinks
+                        .iter()
+                        .filter_map(|s| {
+                            let IconData { symlink_path, .. } = s;
+
+                            if let (Some(symlink_target), Some(path)) = (symlink_path, &icon.path) {
+                                if symlink_target.is_absolute() && symlink_target == path
+                                    || path.parent().unwrap().join(symlink_target) == *path
+                                {
+                                    Some(s.name.clone())
+                                } else {
+                                    None
+                                }
+                            } else {
+                                None
+                            }
+                        })
+                        .collect();
+
+                    if !aliases.is_empty() {
+                        alias_tx
+                            .send_blocking((icon.name.clone(), aliases))
+                            .expect("Failed to send aliases");
+                    }
+                }
+            });
+
             self.num_items.set(icons.len() as u32);
             self.obj().notify_num_items();
 
             let store = ListStore::new::<IconObject>();
             store.extend_from_slice(&icons);
+
+            glib::spawn_future_local(async move {
+                while let Ok((name, aliases)) = alias_rx.recv().await {
+                    let icon = icons.iter().find(|icon| icon.name() == name).unwrap();
+                    icon.add_aliases(aliases);
+                }
+            });
 
             self.icons.replace(Some(store));
             self.obj().notify_icons();
@@ -325,9 +375,7 @@ mod imp {
                     .and_downcast::<IconWidget>()
                     .expect("The child has to be a `IconWidget`.");
 
-                visible_cells
-                    .borrow_mut()
-                    .retain(|c| *c != cell);
+                visible_cells.borrow_mut().retain(|c| *c != cell);
 
                 cell.unbind();
             });
