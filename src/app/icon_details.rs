@@ -10,11 +10,12 @@ mod imp {
     use std::cell::{Cell, RefCell};
 
     use gtk::{
-        Allocation, CompositeTemplate, TemplateChild,
+        Allocation, CompositeTemplate, IconPaintable, TemplateChild,
         glib::{Properties, subclass::InitializingObject},
         prelude::*,
         subclass::prelude::*,
     };
+    use nett_icon_viewer::icon_theme;
 
     use super::*;
 
@@ -55,17 +56,29 @@ mod imp {
         #[property(get, set, construct, default = DEFAULT_ICON_SIZE)]
         pub icon_size: Cell<u32>,
 
-        #[property(get, set)]
-        pub icon_name: RefCell<String>,
-
         #[property(get, set = set_icon, nullable, construct)]
         icon: RefCell<Option<IconObject>>,
+
+        #[property(get)]
+        pub paintable: RefCell<Option<IconPaintable>>,
+
         bindings: RefCell<Vec<glib::Binding>>,
     }
 
     fn set_icon(imp: &IconDetails, icon: Option<IconObject>) {
         if let Some(icon) = icon.as_ref() {
             imp.bind_icon(icon);
+
+            imp.paintable.borrow_mut().replace(icon_theme().lookup_icon(
+                &icon.name(),
+                &[],
+                imp.icon_size.get() as i32,
+                1,
+                gtk::TextDirection::Ltr,
+                gtk::IconLookupFlags::empty(),
+            ));
+            imp.obj().notify_paintable();
+
             imp.stack.set_visible_child_name("details");
         } else {
             imp.unbind_icon();
@@ -99,7 +112,7 @@ mod imp {
     impl IconDetails {
         fn bind_icon(&self, icon: &IconObject) {
             let mut bindings = self.bindings.borrow_mut();
-            let imp = self.obj();
+            let obj = self.obj();
 
             let label = &self.label.get();
             let label_binding = icon
@@ -109,20 +122,12 @@ mod imp {
 
             bindings.push(label_binding);
 
-            let picture = &self.picture.get();
-            let picture_binding = icon
-                .bind_property("paintable", picture, "paintable")
+            let label_tooltip_binding = icon
+                .bind_property("name", label, "tooltip-text")
                 .sync_create()
                 .build();
 
-            bindings.push(picture_binding);
-
-            let icon_size_binding = imp
-                .bind_property("icon-size", icon, "icon-size")
-                .sync_create()
-                .build();
-
-            bindings.push(icon_size_binding);
+            bindings.push(label_tooltip_binding);
 
             let symbolic_row = &self.symbolic_row.get();
             let symbolic_row_binding = icon
@@ -194,7 +199,6 @@ mod imp {
             self.parent_constructed();
 
             let picture = self.picture.get();
-            let label = self.label.get();
             let outer = self.obj();
             let _ = outer
                 .bind_property("icon-size", &picture, "width-request")
@@ -202,27 +206,9 @@ mod imp {
             let _ = outer
                 .bind_property("icon-size", &picture, "height-request")
                 .build();
-
-            let _ = outer.bind_property("icon-name", &label, "label").build();
             let _ = outer
-                .bind_property("icon-name", &label, "tooltip-text")
+                .bind_property("paintable", &picture, "paintable")
                 .build();
-
-            outer.connect_icon_name_notify(move |icon_details| {
-                let icon_name = icon_details.icon_name();
-                let icon_size = icon_details.icon_size();
-
-                if let Some(icon) = icon_details.icon().as_ref() {
-                    if icon_name.is_empty() {
-                        return icon_details.set_icon(None::<IconObject>);
-                    }
-
-                    icon.set_name(icon_name);
-                } else {
-                    let icon = IconObject::new(&icon_name, icon_size);
-                    icon_details.set_icon(Some(icon));
-                }
-            });
         }
 
         fn dispose(&self) {
