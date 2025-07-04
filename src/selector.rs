@@ -199,15 +199,20 @@ mod imp {
                 .map(|icon| icon.data().clone())
                 .collect::<Vec<_>>();
 
-            let (alias_tx, alias_rx) = async_channel::bounded::<(String, Vec<String>)>(1);
-            gio::spawn_blocking(move || {
-                let (symlinks, non_symlinks): (Vec<_>, Vec<_>) =
-                    data.iter().partition(|data| data.symlink);
+            let (symlinks, non_symlinks): (Vec<_>, Vec<_>) = data
+                .iter()
+                .cloned()
+                .enumerate()
+                .partition(|(_, data)| data.symlink);
 
-                for icon in non_symlinks.iter() {
+            let non_symlinks_clone = non_symlinks.clone();
+
+            let (alias_tx, alias_rx) = async_channel::bounded::<(usize, Vec<String>)>(1);
+            gio::spawn_blocking(move || {
+                for (index, icon) in non_symlinks_clone.iter() {
                     let aliases: Vec<_> = symlinks
                         .iter()
-                        .filter_map(|s| {
+                        .filter_map(|(_, s)| {
                             let IconData { symlink_path, .. } = s;
 
                             if let (Some(symlink_target), Some(path)) = (symlink_path, &icon.path) {
@@ -224,11 +229,9 @@ mod imp {
                         })
                         .collect();
 
-                    if !aliases.is_empty() {
-                        alias_tx
-                            .send_blocking((icon.name.clone(), aliases))
-                            .expect("Failed to send aliases");
-                    }
+                    alias_tx
+                        .send_blocking((*index, aliases))
+                        .expect("Failed to send aliases");
                 }
             });
 
@@ -239,8 +242,8 @@ mod imp {
             store.extend_from_slice(&icons);
 
             glib::spawn_future_local(async move {
-                while let Ok((name, aliases)) = alias_rx.recv().await {
-                    let icon = icons.iter().find(|icon| icon.name() == name).unwrap();
+                while let Ok((index, aliases)) = alias_rx.recv().await {
+                    let icon = icons.get(index).unwrap();
                     icon.add_aliases(aliases);
                 }
             });
