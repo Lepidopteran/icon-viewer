@@ -55,19 +55,53 @@
           <object class="GtkBox">
             <property name="orientation">horizontal</property>
             <child>
-              <object class="GtkScrolledWindow" id="scroll">
-                <property name="propagate-natural-width">true</property>
-                <property name="propagate-natural-height">true</property>
-                <property name="hscrollbar-policy">never</property>
-                <property name="hexpand">true</property>
-                <child>
-                  <object class="GtkGridView" id="view">
-                    <signal handler="view_activate" name="activate" swapped="true"></signal>
-                    <property name="single-click-activate">true</property>
-                    <property name="hexpand">true</property>
-                    <property name="vexpand">true</property>
+              <object class="GtkOverlay" id="container">
+                <child type="overlay">
+                  <object class="GtkRevealer" id="status_revealer">
+										<property name="transition-type">slide-up</property>
+                    <property name="valign">end</property>
+                    <property name="halign">start</property>
+                    <child>
+                      <object class="GtkBox">
+                        <child>
+                          <object class="GtkLabel">
+														<property name="margin-start">4</property>
+														<property name="margin-end">4</property>
+														<property name="margin-top">4</property>
+														<property name="margin-bottom">4</property>
+                            <property name="label">Processing Icons</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkProgressBar" id="progress">
+														<property name="margin-end">8</property>
+														<property name="valign">center</property>
+                          </object>
+                        </child>
+                        <style>
+                          <class name="background"></class>
+                          <class name="rounded-top-right"></class>
+                        </style>
+                      </object>
+                    </child>
                   </object>
                 </child>
+                <property name="child">
+                  <object class="GtkScrolledWindow" id="scroll">
+                    <property name="propagate-natural-width">true</property>
+                    <property name="propagate-natural-height">true</property>
+                    <property name="hscrollbar-policy">never</property>
+                    <property name="hexpand">true</property>
+                    <child>
+                      <object class="GtkGridView" id="view">
+                        <signal handler="view_activate" name="activate" swapped="true"></signal>
+                        <property name="single-click-activate">true</property>
+                        <property name="hexpand">true</property>
+                        <property name="vexpand">true</property>
+                      </object>
+                    </child>
+                  </object>
+                </property>
               </object>
             </child>
           </object>
@@ -75,6 +109,7 @@
         <child>
           <object class="GtkSeparator"></object>
         </child>
+        <child></child>
         <child>
           <object class="GtkCenterBox">
             <property name="hexpand">true</property>

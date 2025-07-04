@@ -57,6 +57,12 @@ mod imp {
         #[template_child]
         pub filter_widget: TemplateChild<FilterWidget>,
 
+        #[template_child]
+        pub status_revealer: TemplateChild<gtk::Revealer>,
+
+        #[template_child]
+        progress: TemplateChild<gtk::ProgressBar>,
+
         #[property(get, set = set_icon_size, construct, default = DEFAULT_ICON_SIZE)]
         pub icon_size: Cell<u32>,
 
@@ -241,10 +247,15 @@ mod imp {
             let store = ListStore::new::<IconObject>();
             store.extend_from_slice(&icons);
 
+            let status_revealer = self.status_revealer.get();
+            let progress_bar = self.progress.get();
             glib::spawn_future_local(async move {
                 while let Ok((index, aliases)) = alias_rx.recv().await {
                     let icon = icons.get(index).unwrap();
                     icon.add_aliases(aliases);
+
+                    progress_bar.set_fraction((index + 1) as f64 / icons.len() as f64);
+                    status_revealer.set_reveal_child(index != data.len() - 1);
                 }
             });
 
