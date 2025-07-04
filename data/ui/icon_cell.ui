@@ -2,30 +2,49 @@
 <interface>
   <template class="NettIconViewerIconCell" parent="GtkWidget">
     <child>
-      <object class="GtkGrid" id="container">
-				<property name="halign">center</property>
-				<property name="margin-start">4</property>
-				<property name="margin-end">4</property>
-				<property name="margin-top">4</property>
-				<property name="margin-bottom">4</property>
-        <child>
-					<object class="GtkPicture" id="image">
-						<property name="can-shrink">false</property>
-						<layout>
-							<property name="row">0</property>
-							<property name="column">0</property>
-						</layout>
-					</object>
+      <object class="GtkOverlay" id="overlay">
+        <child type="overlay">
+          <object class="GtkBox">
+            <property name="orientation">vertical</property>
+            <property name="halign">end</property>
+            <child>
+              <object class="GtkLabel" id="count">
+								<property name="xalign">1.0</property>
+                <property name="visible">false</property>
+                <style>
+                  <class name="badge"></class>
+                </style>
+              </object>
+            </child>
+          </object>
         </child>
-				<child>
-					<object class="GtkLabel" id="label">
-						<property name="ellipsize">end</property>
-						<layout>
-							<property name="column">0</property>
-							<property name="row">1</property>
-						</layout>
-					</object>
-				</child>
+        <property name="child">
+          <object class="GtkGrid" id="container">
+            <property name="halign">center</property>
+            <property name="margin-start">4</property>
+            <property name="margin-end">4</property>
+            <property name="margin-top">4</property>
+            <property name="margin-bottom">4</property>
+            <child>
+              <object class="GtkPicture" id="image">
+                <property name="can-shrink">false</property>
+                <layout>
+                  <property name="row">0</property>
+                  <property name="column">0</property>
+                </layout>
+              </object>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label">
+                <property name="ellipsize">end</property>
+                <layout>
+                  <property name="column">0</property>
+                  <property name="row">1</property>
+                </layout>
+              </object>
+            </child>
+          </object>
+        </property>
       </object>
     </child>
   </template>

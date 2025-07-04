@@ -1,0 +1,13 @@
+:root {
+  --primary-color: @theme_selected_bg_color;
+  --primary-text-color: @theme_selected_fg_color;
+}
+
+.badge {
+  background-color: var(--primary-color);
+  color: var(--primary-text-color);
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-weight: bold;
+}
+
