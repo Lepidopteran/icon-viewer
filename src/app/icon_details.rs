@@ -175,7 +175,7 @@ mod imp {
             let path_row = &self.path_row.get();
             let path_row_binding = icon
                 .bind_property("path", path_row, "value")
-                .transform_to(|_, v: String| Some(v.to_value()))
+                .transform_to(|_, v: Option<String>| Some(v.unwrap_or_default().to_value()))
                 .sync_create()
                 .build();
 
