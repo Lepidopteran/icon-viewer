@@ -10,7 +10,8 @@ mod imp {
     use std::cell::{Cell, RefCell};
 
     use gtk::{
-        Allocation, CompositeTemplate, IconPaintable, TemplateChild,
+        Allocation, CompositeTemplate, IconPaintable, Image, Label, ListItem, NoSelection,
+        SignalListItemFactory, StringObject, TemplateChild, Widget,
         glib::{Properties, subclass::InitializingObject},
         prelude::*,
         subclass::prelude::*,
@@ -28,6 +29,12 @@ mod imp {
 
         #[template_child]
         pub container: TemplateChild<gtk::Box>,
+
+        #[template_child]
+        pub alias_button: TemplateChild<gtk::MenuButton>,
+
+        #[template_child]
+        pub alias_list: TemplateChild<gtk::ListView>,
 
         #[template_child]
         pub picture: TemplateChild<gtk::Picture>,
@@ -62,6 +69,8 @@ mod imp {
         #[property(get)]
         pub paintable: RefCell<Option<IconPaintable>>,
 
+        #[property(get)]
+        selection: RefCell<Option<NoSelection>>,
         bindings: RefCell<Vec<glib::Binding>>,
     }
 
@@ -112,7 +121,23 @@ mod imp {
     impl IconDetails {
         fn bind_icon(&self, icon: &IconObject) {
             let mut bindings = self.bindings.borrow_mut();
-            let obj = self.obj();
+
+            if let Some(selection) = self.selection.borrow().as_ref() {
+                bindings.push(
+                    icon.bind_property("aliases", selection, "model")
+                        .transform_to(|_, v: Vec<String>| Some(gtk::StringList::from_iter(v)))
+                        .sync_create()
+                        .build(),
+                );
+            }
+            let alias_button = &self.alias_button.get();
+            let alias_binding = icon
+                .bind_property("aliases", alias_button, "sensitive")
+                .transform_to(|_, v: Vec<String>| Some(!v.is_empty()))
+                .sync_create()
+                .build();
+
+            bindings.push(alias_binding);
 
             let label = &self.label.get();
             let label_binding = icon
@@ -182,6 +207,25 @@ mod imp {
         }
 
         #[template_callback]
+        fn alias_activated(list: &gtk::ListView, index: u32) {
+            let model = list.model().unwrap();
+            let name = model
+                .item(index)
+                .as_ref()
+                .unwrap()
+                .downcast_ref::<StringObject>()
+                .unwrap()
+                .string();
+
+            let clipboard = gtk::gdk::Display::default()
+                .expect("Failed to get display")
+                .clipboard();
+
+            clipboard.set_text(&name);
+            log::debug!("Copied \"{}\" to clipboard", name);
+        }
+
+        #[template_callback]
         fn copy_icon(&self) {
             let name = self.label.get().text();
             let clipboard = gtk::gdk::Display::default()
@@ -209,6 +253,53 @@ mod imp {
             let _ = outer
                 .bind_property("paintable", &picture, "paintable")
                 .build();
+
+            let selection = NoSelection::new(None::<gtk::gio::ListModel>);
+
+            let list = self.alias_list.get();
+
+            let factory = SignalListItemFactory::new();
+            factory.connect_setup(move |_, list_item| {
+                let label = Label::builder()
+                    .ellipsize(gtk::pango::EllipsizeMode::End)
+                    .hexpand(true)
+                    .xalign(0.0)
+                    .build();
+
+                let image = Image::builder()
+                    .icon_name("edit-copy-symbolic")
+                    .icon_size(gtk::IconSize::Normal)
+                    .halign(gtk::Align::End)
+                    .build();
+
+                let container = gtk::Box::builder()
+                    .orientation(gtk::Orientation::Horizontal)
+                    .spacing(12)
+                    .margin_start(4)
+                    .margin_end(4)
+                    .margin_top(4)
+                    .margin_bottom(4)
+                    .hexpand(true)
+                    .build();
+
+                container.append(&label);
+                container.append(&image);
+
+                let list_item = list_item
+                    .downcast_ref::<ListItem>()
+                    .expect("Needs to be ListItem");
+
+                list_item.set_child(Some(&container));
+
+                list_item
+                    .property_expression("item")
+                    .chain_property::<StringObject>("string")
+                    .bind(&label, "label", Widget::NONE);
+            });
+
+            list.set_factory(Some(&factory));
+            list.set_model(Some(&selection));
+            self.selection.borrow_mut().replace(selection);
         }
 
         fn dispose(&self) {
