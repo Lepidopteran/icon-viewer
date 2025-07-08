@@ -24,6 +24,10 @@ mod imp {
     #[template(resource = "/codes/blaine/nett-icon-viewer/icon_cell.ui")]
     pub struct IconWidget {
         #[template_child]
+        pub overlay: TemplateChild<gtk::Overlay>,
+        #[template_child]
+        pub count: TemplateChild<gtk::Label>,
+        #[template_child]
         pub container: TemplateChild<gtk::Grid>,
         #[template_child]
         pub label: TemplateChild<gtk::Label>,
@@ -68,18 +72,16 @@ mod imp {
         }
 
         fn dispose(&self) {
-            self.label.unparent();
-            self.image.unparent();
-            self.container.unparent();
+            self.overlay.unparent();
         }
     }
     impl WidgetImpl for IconWidget {
         fn measure(&self, orientation: gtk::Orientation, for_size: i32) -> (i32, i32, i32, i32) {
-            self.container.measure(orientation, for_size)
+            self.overlay.measure(orientation, for_size)
         }
         fn size_allocate(&self, width: i32, height: i32, baseline: i32) {
             self.parent_size_allocate(width, height, baseline);
-            self.container
+            self.overlay
                 .size_allocate(&Allocation::new(0, 0, width, height), baseline);
         }
     }
@@ -96,10 +98,14 @@ impl IconWidget {
         glib::Object::builder().build()
     }
 
-    pub fn bind(&self, icon: &IconObject, search_text: &str) {
+    pub fn bind(&self, icon: &IconObject, search_text: &str, icon_size: u32) {
         let image = self.imp().image.clone();
         let label = self.imp().label.clone();
         let mut bindings = self.imp().bindings.borrow_mut();
+
+        if icon_size != self.icon_size() {
+            self.set_icon_size(icon_size);
+        }
 
         let image_binding = icon
             .bind_property("paintable", &image, "paintable")
@@ -114,6 +120,36 @@ impl IconWidget {
             .build();
 
         bindings.push(label_binding);
+
+        let count = &self.imp().count.get();
+        let count_binding = icon
+            .bind_property("aliases", count, "label")
+            .transform_to(|_, aliases: Vec<String>| {
+                if aliases.is_empty() {
+                    None
+                } else {
+                    Some(aliases.len().to_string())
+                }
+            })
+            .sync_create()
+            .build();
+
+        bindings.push(count_binding);
+
+        let count_visibility_binding = icon
+            .bind_property("aliases", count, "visible")
+            .transform_to(|_, aliases: Vec<String>| Some(!aliases.is_empty()))
+            .sync_create()
+            .build();
+
+        bindings.push(count_visibility_binding);
+
+        let icon_size_binding = self
+            .bind_property("icon-size", icon, "icon-size")
+            .sync_create()
+            .build();
+
+        bindings.push(icon_size_binding);
 
         let text = label.text().to_string();
         let matcher = SkimMatcherV2::default();

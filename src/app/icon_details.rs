@@ -10,11 +10,13 @@ mod imp {
     use std::cell::{Cell, RefCell};
 
     use gtk::{
-        Allocation, CompositeTemplate, TemplateChild,
+        Allocation, CompositeTemplate, IconPaintable, Image, Label, ListItem, NoSelection,
+        SignalListItemFactory, StringObject, TemplateChild, Widget,
         glib::{Properties, subclass::InitializingObject},
         prelude::*,
         subclass::prelude::*,
     };
+    use nett_icon_viewer::icon_theme;
 
     use super::*;
 
@@ -27,6 +29,12 @@ mod imp {
 
         #[template_child]
         pub container: TemplateChild<gtk::Box>,
+
+        #[template_child]
+        pub alias_button: TemplateChild<gtk::MenuButton>,
+
+        #[template_child]
+        pub alias_list: TemplateChild<gtk::ListView>,
 
         #[template_child]
         pub picture: TemplateChild<gtk::Picture>,
@@ -55,17 +63,31 @@ mod imp {
         #[property(get, set, construct, default = DEFAULT_ICON_SIZE)]
         pub icon_size: Cell<u32>,
 
-        #[property(get, set)]
-        pub icon_name: RefCell<String>,
-
         #[property(get, set = set_icon, nullable, construct)]
         icon: RefCell<Option<IconObject>>,
+
+        #[property(get)]
+        pub paintable: RefCell<Option<IconPaintable>>,
+
+        #[property(get)]
+        selection: RefCell<Option<NoSelection>>,
         bindings: RefCell<Vec<glib::Binding>>,
     }
 
     fn set_icon(imp: &IconDetails, icon: Option<IconObject>) {
         if let Some(icon) = icon.as_ref() {
             imp.bind_icon(icon);
+
+            imp.paintable.borrow_mut().replace(icon_theme().lookup_icon(
+                &icon.name(),
+                &[],
+                imp.icon_size.get() as i32,
+                1,
+                gtk::TextDirection::Ltr,
+                gtk::IconLookupFlags::empty(),
+            ));
+            imp.obj().notify_paintable();
+
             imp.stack.set_visible_child_name("details");
         } else {
             imp.unbind_icon();
@@ -99,7 +121,23 @@ mod imp {
     impl IconDetails {
         fn bind_icon(&self, icon: &IconObject) {
             let mut bindings = self.bindings.borrow_mut();
-            let imp = self.obj();
+
+            if let Some(selection) = self.selection.borrow().as_ref() {
+                bindings.push(
+                    icon.bind_property("aliases", selection, "model")
+                        .transform_to(|_, v: Vec<String>| Some(gtk::StringList::from_iter(v)))
+                        .sync_create()
+                        .build(),
+                );
+            }
+            let alias_button = &self.alias_button.get();
+            let alias_binding = icon
+                .bind_property("aliases", alias_button, "sensitive")
+                .transform_to(|_, v: Vec<String>| Some(!v.is_empty()))
+                .sync_create()
+                .build();
+
+            bindings.push(alias_binding);
 
             let label = &self.label.get();
             let label_binding = icon
@@ -109,20 +147,12 @@ mod imp {
 
             bindings.push(label_binding);
 
-            let picture = &self.picture.get();
-            let picture_binding = icon
-                .bind_property("paintable", picture, "paintable")
+            let label_tooltip_binding = icon
+                .bind_property("name", label, "tooltip-text")
                 .sync_create()
                 .build();
 
-            bindings.push(picture_binding);
-
-            let icon_size_binding = imp
-                .bind_property("icon-size", icon, "icon-size")
-                .sync_create()
-                .build();
-
-            bindings.push(icon_size_binding);
+            bindings.push(label_tooltip_binding);
 
             let symbolic_row = &self.symbolic_row.get();
             let symbolic_row_binding = icon
@@ -177,6 +207,25 @@ mod imp {
         }
 
         #[template_callback]
+        fn alias_activated(list: &gtk::ListView, index: u32) {
+            let model = list.model().unwrap();
+            let name = model
+                .item(index)
+                .as_ref()
+                .unwrap()
+                .downcast_ref::<StringObject>()
+                .unwrap()
+                .string();
+
+            let clipboard = gtk::gdk::Display::default()
+                .expect("Failed to get display")
+                .clipboard();
+
+            clipboard.set_text(&name);
+            log::debug!("Copied \"{}\" to clipboard", name);
+        }
+
+        #[template_callback]
         fn copy_icon(&self) {
             let name = self.label.get().text();
             let clipboard = gtk::gdk::Display::default()
@@ -194,7 +243,6 @@ mod imp {
             self.parent_constructed();
 
             let picture = self.picture.get();
-            let label = self.label.get();
             let outer = self.obj();
             let _ = outer
                 .bind_property("icon-size", &picture, "width-request")
@@ -202,27 +250,56 @@ mod imp {
             let _ = outer
                 .bind_property("icon-size", &picture, "height-request")
                 .build();
-
-            let _ = outer.bind_property("icon-name", &label, "label").build();
             let _ = outer
-                .bind_property("icon-name", &label, "tooltip-text")
+                .bind_property("paintable", &picture, "paintable")
                 .build();
 
-            outer.connect_icon_name_notify(move |icon_details| {
-                let icon_name = icon_details.icon_name();
-                let icon_size = icon_details.icon_size();
+            let selection = NoSelection::new(None::<gtk::gio::ListModel>);
 
-                if let Some(icon) = icon_details.icon().as_ref() {
-                    if icon_name.is_empty() {
-                        return icon_details.set_icon(None::<IconObject>);
-                    }
+            let list = self.alias_list.get();
 
-                    icon.set_name(icon_name);
-                } else {
-                    let icon = IconObject::new(&icon_name, icon_size);
-                    icon_details.set_icon(Some(icon));
-                }
+            let factory = SignalListItemFactory::new();
+            factory.connect_setup(move |_, list_item| {
+                let label = Label::builder()
+                    .ellipsize(gtk::pango::EllipsizeMode::End)
+                    .hexpand(true)
+                    .xalign(0.0)
+                    .build();
+
+                let image = Image::builder()
+                    .icon_name("edit-copy-symbolic")
+                    .icon_size(gtk::IconSize::Normal)
+                    .halign(gtk::Align::End)
+                    .build();
+
+                let container = gtk::Box::builder()
+                    .orientation(gtk::Orientation::Horizontal)
+                    .spacing(12)
+                    .margin_start(4)
+                    .margin_end(4)
+                    .margin_top(4)
+                    .margin_bottom(4)
+                    .hexpand(true)
+                    .build();
+
+                container.append(&label);
+                container.append(&image);
+
+                let list_item = list_item
+                    .downcast_ref::<ListItem>()
+                    .expect("Needs to be ListItem");
+
+                list_item.set_child(Some(&container));
+
+                list_item
+                    .property_expression("item")
+                    .chain_property::<StringObject>("string")
+                    .bind(&label, "label", Widget::NONE);
             });
+
+            list.set_factory(Some(&factory));
+            list.set_model(Some(&selection));
+            self.selection.borrow_mut().replace(selection);
         }
 
         fn dispose(&self) {

@@ -1,21 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
-  <object class="GtkStringList" id="categories">
-    <items>
-      <item>Actions</item>
-      <item>Animations</item>
-      <item>Applications</item>
-      <item>Categories</item>
-      <item>Devices</item>
-      <item>Emblems</item>
-      <item>Emotes</item>
-      <item>International</item>
-      <item>MimeTypes</item>
-      <item>Places</item>
-      <item>Status</item>
-    </items>
-  </object>
-
   <template class="NettIconViewerSelectorFilters" parent="GtkWidget">
     <property name="hexpand">true</property>
     <property name="vexpand">true</property>
@@ -25,6 +9,44 @@
         <property name="vexpand">true</property>
         <property name="hexpand">true</property>
         <property name="spacing">4</property>
+        <child>
+          <object class="GtkBox">
+            <property name="orientation">vertical</property>
+            <child>
+              <object class="GtkLabel">
+                <property name="label">Types</property>
+                <property name="xalign">0</property>
+                <property name="margin-start">4</property>
+                <property name="margin-end">4</property>
+                <property name="margin-top">4</property>
+                <property name="margin-bottom">4</property>
+                <attributes>
+                  <attribute name="weight" value="bold"></attribute>
+                </attributes>
+              </object>
+            </child>
+            <child>
+              <object class="GtkBox">
+                <property name="margin-start">8</property>
+                <property name="margin-top">4</property>
+                <property name="margin-bottom">4</property>
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="GtkCheckButton" id="symlink_check">
+										<signal handler="symlink_toggled" name="toggled" swapped="true"></signal>
+                    <property name="label">Symlinks</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkCheckButton" id="symbolic_check">
+										<signal handler="symbolic_toggled" name="toggled" swapped="true"></signal>
+                    <property name="label">Symbolic</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
         <child>
           <object class="GtkBox">
             <property name="orientation">vertical</property>
@@ -42,9 +64,10 @@
               </object>
             </child>
             <child>
-              <object class="GtkListBox" id="category_list">
-								<signal handler="category_list_row_activated" name="row-activated"></signal>
-                <property name="selection-mode">none</property>
+              <object class="GtkBox" id="category_box">
+                <property name="orientation">vertical</property>
+                <property name="margin-start">8</property>
+                <property name="margin-top">4</property>
               </object>
             </child>
           </object>

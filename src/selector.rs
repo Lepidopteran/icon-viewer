@@ -2,7 +2,7 @@ use gtk::glib;
 use gtk::glib::subclass::prelude::*;
 
 use super::{
-    FilterWidget,
+    FilterMode, FilterWidget,
     icon::{IconObject, IconWidget},
     icon_theme,
 };
@@ -10,18 +10,23 @@ use super::{
 const DEFAULT_ICON_SIZE: u32 = 64;
 
 mod imp {
-    use std::cell::{Cell, RefCell};
+    use std::{
+        cell::{Cell, RefCell},
+        rc::Rc,
+    };
 
     use gtk::{
         Allocation, CompositeTemplate, ListItem, SignalListItemFactory, SingleSelection,
         TemplateChild,
-        gio::ListStore,
+        gio::{self, ListStore},
         glib::{Properties, subclass::InitializingObject},
         prelude::*,
         subclass::prelude::*,
     };
 
     use fuzzy_matcher::{FuzzyMatcher, skim::SkimMatcherV2};
+
+    use crate::icon::IconData;
 
     use super::*;
 
@@ -52,6 +57,12 @@ mod imp {
         #[template_child]
         pub filter_widget: TemplateChild<FilterWidget>,
 
+        #[template_child]
+        pub status_revealer: TemplateChild<gtk::Revealer>,
+
+        #[template_child]
+        progress: TemplateChild<gtk::ProgressBar>,
+
         #[property(get, set = set_icon_size, construct, default = DEFAULT_ICON_SIZE)]
         pub icon_size: Cell<u32>,
 
@@ -60,9 +71,6 @@ mod imp {
 
         #[property(get, set)]
         pub copy_on_activate: Cell<bool>,
-
-        #[property(get, set = set_group_symlinks, construct, default = true)]
-        pub group_symlinks: Cell<bool>,
 
         #[property(get, set = set_include_tags_in_search, construct, default = true)]
         pub include_tags_in_search: Cell<bool>,
@@ -73,6 +81,10 @@ mod imp {
         #[property(get)]
         pub num_items: Cell<u32>,
 
+        displayed_icons: Rc<RefCell<Vec<IconWidget>>>,
+
+        #[property(get, nullable)]
+        icons: RefCell<Option<ListStore>>,
         sorter: gtk::CustomSorter,
         filter: gtk::CustomFilter,
         list: gtk::SortListModel,
@@ -81,11 +93,8 @@ mod imp {
     fn set_icon_size(imp: &IconSelector, value: u32) {
         imp.icon_size.set(value);
 
-        if let Some(model) = imp.list.model() {
-            for item in model.into_iter().flatten() {
-                let icon = item.downcast_ref::<IconObject>().unwrap();
-                icon.set_icon_size(value);
-            }
+        for cell in imp.displayed_icons.borrow().iter() {
+            cell.set_icon_size(value);
         }
 
         imp.obj().notify_icon_size();
@@ -95,12 +104,6 @@ mod imp {
         imp.include_tags_in_search.set(value);
         imp.filter_changed();
         imp.obj().notify_include_tags_in_search();
-    }
-
-    fn set_group_symlinks(imp: &IconSelector, value: bool) {
-        imp.group_symlinks.set(value);
-        imp.filter_changed();
-        imp.obj().notify_group_symlinks();
     }
 
     fn set_included_tags(imp: &IconSelector, value: Vec<String>) {
@@ -130,6 +133,10 @@ mod imp {
     impl IconSelector {
         pub fn get_selected_icon(&self) -> Option<IconObject> {
             self.list.item(self.selected.get()).and_downcast()
+        }
+
+        fn icons(&self) -> ListStore {
+            self.icons.borrow().clone().expect("Icons not set")
         }
 
         fn update_count_label(&self) {
@@ -193,12 +200,67 @@ mod imp {
                 .map(|n| IconObject::new(n, self.icon_size.get()))
                 .collect::<Vec<_>>();
 
+            let data = icons
+                .iter()
+                .map(|icon| icon.data().clone())
+                .collect::<Vec<_>>();
+
+            let (symlinks, non_symlinks): (Vec<_>, Vec<_>) = data
+                .iter()
+                .cloned()
+                .enumerate()
+                .partition(|(_, data)| data.symlink);
+
+            let non_symlinks_clone = non_symlinks.clone();
+
+            let (alias_tx, alias_rx) = async_channel::bounded::<(usize, Vec<String>)>(1);
+            gio::spawn_blocking(move || {
+                for (index, icon) in non_symlinks_clone.iter() {
+                    let aliases: Vec<_> = symlinks
+                        .iter()
+                        .filter_map(|(_, s)| {
+                            let IconData { symlink_path, .. } = s;
+
+                            if let (Some(symlink_target), Some(path)) = (symlink_path, &icon.path) {
+                                if symlink_target.is_absolute() && symlink_target == path
+                                    || path.parent().unwrap().join(symlink_target) == *path
+                                {
+                                    Some(s.name.clone())
+                                } else {
+                                    None
+                                }
+                            } else {
+                                None
+                            }
+                        })
+                        .collect();
+
+                    alias_tx
+                        .send_blocking((*index, aliases))
+                        .expect("Failed to send aliases");
+                }
+            });
+
             self.num_items.set(icons.len() as u32);
             self.obj().notify_num_items();
 
             let store = ListStore::new::<IconObject>();
-
             store.extend_from_slice(&icons);
+
+            let status_revealer = self.status_revealer.get();
+            let progress_bar = self.progress.get();
+            glib::spawn_future_local(async move {
+                while let Ok((index, aliases)) = alias_rx.recv().await {
+                    let icon = icons.get(index).unwrap();
+                    icon.add_aliases(aliases);
+
+                    progress_bar.set_fraction((index + 1) as f64 / icons.len() as f64);
+                    status_revealer.set_reveal_child(index != data.len() - 1);
+                }
+            });
+
+            self.icons.replace(Some(store));
+            self.obj().notify_icons();
 
             let obj = self.obj().clone();
             self.filter.set_filter_func(move |item| {
@@ -216,10 +278,17 @@ mod imp {
 
                 let filters: Vec<FilterFunction> = vec![
                     Box::new(|icon: &IconObject, selector: &super::IconSelector| {
-                        if selector.group_symlinks() {
-                            !icon.symlink()
-                        } else {
-                            true
+                        match selector.imp().filter_widget.symlink_filter_mode() {
+                            FilterMode::Is => icon.symlink(),
+                            FilterMode::Not => !icon.symlink(),
+                            FilterMode::Either => true,
+                        }
+                    }),
+                    Box::new(|icon: &IconObject, selector: &super::IconSelector| {
+                        match selector.imp().filter_widget.symbolic_filter_mode() {
+                            FilterMode::Is => icon.symbolic(),
+                            FilterMode::Not => !icon.symbolic(),
+                            FilterMode::Either => true,
                         }
                     }),
                     Box::new(|icon: &IconObject, selector: &super::IconSelector| {
@@ -229,29 +298,13 @@ mod imp {
                             .all(|tag| icon.tags().contains(tag))
                     }),
                     Box::new(|icon: &IconObject, selector: &super::IconSelector| {
-                        let included_categories: Vec<&str> = selector
-                            .imp()
-                            .filter_widget
-                            .included_categories()
-                            .iter()
-                            .filter_map(|c| match c.as_str() {
-                                "Actions" => Some("actions"),
-                                "Animations" => Some("animations"),
-                                "Applications" => Some("apps"),
-                                "Categories" => Some("categories"),
-                                "Devices" => Some("devices"),
-                                "Emblems" => Some("emblems"),
-                                "Emotes" => Some("emotes"),
-                                "International" => Some("intl"),
-                                "MimeTypes" => Some("mimetypes"),
-                                "Places" => Some("places"),
-                                "Status" => Some("status"),
-                                _ => None,
-                            })
-                            .collect();
+                        let included_categories =
+                            selector.imp().filter_widget.included_categories();
 
                         icon.tags().iter().enumerate().any(|(index, tag)| {
-                            included_categories.iter().any(|c| tag.starts_with(c) && index != 0)
+                            included_categories
+                                .iter()
+                                .any(|c| tag.starts_with(c) && index != 0)
                         })
                     }),
                 ];
@@ -261,7 +314,7 @@ mod imp {
                 matches
             });
 
-            let filtered = gtk::FilterListModel::new(Some(store), Some(self.filter.clone()));
+            let filtered = gtk::FilterListModel::new(Some(self.icons()), Some(self.filter.clone()));
             filtered.set_incremental(true);
 
             let obj = self.obj().clone();
@@ -304,6 +357,9 @@ mod imp {
             });
 
             let search = self.search.get();
+
+            let displayed_icons = self.displayed_icons.clone();
+            let obj = self.obj().clone();
             factory.connect_bind(move |_, list_item| {
                 let icon = list_item
                     .downcast_ref::<ListItem>()
@@ -319,9 +375,12 @@ mod imp {
                     .and_downcast::<IconWidget>()
                     .expect("The child has to be a `IconWidget`.");
 
-                cell.bind(&icon, search.text().as_ref());
+                cell.bind(&icon, search.text().as_ref(), obj.icon_size());
+
+                displayed_icons.borrow_mut().push(cell);
             });
 
+            let visible_cells = self.displayed_icons.clone();
             factory.connect_unbind(move |_, list_item| {
                 let cell = list_item
                     .downcast_ref::<ListItem>()
@@ -329,6 +388,8 @@ mod imp {
                     .child()
                     .and_downcast::<IconWidget>()
                     .expect("The child has to be a `IconWidget`.");
+
+                visible_cells.borrow_mut().retain(|c| *c != cell);
 
                 cell.unbind();
             });
