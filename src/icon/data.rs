@@ -8,8 +8,8 @@ pub struct IconData {
     pub tags: Vec<String>,
     pub path: Option<PathBuf>,
     pub symlink_path: Option<PathBuf>,
-    pub symbolic: bool,
-    pub symlink: bool,
+    pub is_symbolic: bool,
+    pub is_symlink: bool,
 }
 
 impl IconData {
@@ -41,8 +41,8 @@ mod imp {
         #[property(name = "name", get, set = set_name, member = name, type = String)]
         #[property(name = "aliases", get, set, member = aliases, type = Vec<String>)]
         #[property(name = "tags", get, member = tags, type = Vec<String>)]
-        #[property(name = "symbolic", get, member = symbolic, type = bool)]
-        #[property(name = "symlink", get, member = symlink, type = bool)]
+        #[property(name = "is-symbolic", get, member = is_symbolic, type = bool)]
+        #[property(name = "is-symlink", get, member = is_symlink, type = bool)]
         #[property(
             name = "path",
             get = |o: &Self| o.data.borrow().path.as_ref().map(|p| p.display().to_string()),
@@ -113,8 +113,8 @@ mod imp {
                 ("aliases", current_data.aliases != data.aliases),
                 ("tags", current_data.tags != data.tags),
                 ("path", current_data.path != data.path),
-                ("symbolic", current_data.symbolic != data.symbolic),
-                ("symlink", current_data.symlink != data.symlink),
+                ("is-symbolic", current_data.is_symbolic != data.is_symbolic),
+                ("is-symlink", current_data.is_symlink != data.is_symlink),
                 (
                     "symlink-path",
                     current_data.symlink_path != data.symlink_path,
@@ -161,11 +161,11 @@ mod imp {
                     }
 
                     data.path = Some(path);
-                    data.symlink = is_symlink;
+                    data.is_symlink = is_symlink;
                     data.tags = get_tags(&data);
                 }
 
-                data.symbolic = paintable.is_symbolic();
+                data.is_symbolic = paintable.is_symbolic();
 
                 self.replace_data(data);
             }

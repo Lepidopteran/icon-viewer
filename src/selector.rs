@@ -209,7 +209,7 @@ mod imp {
                 .iter()
                 .cloned()
                 .enumerate()
-                .partition(|(_, data)| data.symlink);
+                .partition(|(_, data)| data.is_symlink);
 
             let non_symlinks_clone = non_symlinks.clone();
 
@@ -279,15 +279,15 @@ mod imp {
                 let filters: Vec<FilterFunction> = vec![
                     Box::new(|icon: &IconObject, selector: &super::IconSelector| {
                         match selector.imp().filter_widget.symlink_filter_mode() {
-                            FilterMode::Is => icon.symlink(),
-                            FilterMode::Not => !icon.symlink(),
+                            FilterMode::Is => icon.is_symlink(),
+                            FilterMode::Not => !icon.is_symlink(),
                             FilterMode::Either => true,
                         }
                     }),
                     Box::new(|icon: &IconObject, selector: &super::IconSelector| {
                         match selector.imp().filter_widget.symbolic_filter_mode() {
-                            FilterMode::Is => icon.symbolic(),
-                            FilterMode::Not => !icon.symbolic(),
+                            FilterMode::Is => icon.is_symbolic(),
+                            FilterMode::Not => !icon.is_symbolic(),
                             FilterMode::Either => true,
                         }
                     }),

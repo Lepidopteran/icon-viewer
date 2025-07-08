@@ -156,7 +156,7 @@ mod imp {
 
             let symbolic_row = &self.symbolic_row.get();
             let symbolic_row_binding = icon
-                .bind_property("symbolic", symbolic_row, "value")
+                .bind_property("is-symbolic", symbolic_row, "value")
                 .transform_to(|_, v: bool| Some(v.to_string().to_value()))
                 .sync_create()
                 .build();
@@ -183,7 +183,7 @@ mod imp {
 
             let symlink_row = &self.symlink_row.get();
             let symlink_row_binding = icon
-                .bind_property("symlink", symlink_row, "value")
+                .bind_property("is-symlink", symlink_row, "value")
                 .transform_to(|_, v: bool| Some(v.to_string().to_value()))
                 .sync_create()
                 .build();
