@@ -2,7 +2,7 @@ use gtk::glib;
 use gtk::glib::subclass::prelude::*;
 
 use super::{
-    FilterMode, FilterWidget,
+    CATEGORIES, FilterMode, FilterWidget,
     icon::{IconObject, IconWidget},
     icon_theme,
 };
@@ -301,11 +301,17 @@ mod imp {
                         let included_categories =
                             selector.imp().filter_widget.included_categories();
 
-                        icon.tags().iter().enumerate().any(|(index, tag)| {
+                        let tags: Vec<_> =
+                            icon.tags().iter().map(|tag| tag.to_lowercase()).collect();
+
+                        tags.iter().enumerate().any(|(index, tag)| {
                             included_categories
                                 .iter()
                                 .any(|c| tag.starts_with(c) && index != 0)
-                        })
+                        }) || included_categories.contains(&String::from("unknown"))
+                            && tags
+                                .iter()
+                                .all(|tag| !CATEGORIES.iter().any(|c| tag.starts_with(c.1)))
                     }),
                 ];
 

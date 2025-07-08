@@ -10,6 +10,8 @@ pub enum FilterMode {
     Either,
 }
 
+use super::CATEGORIES;
+
 mod imp {
     use std::cell::RefCell;
     use std::collections::HashSet;
@@ -147,20 +149,11 @@ mod imp {
             map_filter_mode_to_check(&self.symbolic_check, &obj.symbolic_filter_mode());
             map_filter_mode_to_check(&self.symlink_check, &obj.symlink_filter_mode());
 
-            for (name, value) in [
-                ("Actions", "actions"),
-                ("Animations", "animations"),
-                ("Applications", "apps"),
-                ("Categories", "categories"),
-                ("Devices", "devices"),
-                ("Emblems", "emblems"),
-                ("Emotes", "emotes"),
-                ("International", "intl"),
-                ("MimeTypes", "mimetypes"),
-                ("Places", "places"),
-                ("Status", "status"),
-            ] {
-                let check = gtk::CheckButton::builder().label(name).active(true).build();
+            for (name, value) in CATEGORIES.iter().chain(&[("Unknown", "unknown")]) {
+                let check = gtk::CheckButton::builder()
+                    .label(*name)
+                    .active(true)
+                    .build();
                 self.included_categories
                     .borrow_mut()
                     .push(value.to_string());
