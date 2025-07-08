@@ -72,11 +72,7 @@ mod imp {
         }
 
         fn dispose(&self) {
-            self.count.unparent();
-            self.label.unparent();
-            self.image.unparent();
             self.overlay.unparent();
-            self.container.unparent();
         }
     }
     impl WidgetImpl for IconWidget {
