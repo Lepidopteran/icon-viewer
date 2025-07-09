@@ -10,6 +10,7 @@ pub struct IconData {
     pub symlink_path: Option<PathBuf>,
     pub is_symbolic: bool,
     pub is_symlink: bool,
+    pub is_embedded: bool,
 }
 
 impl IconData {
@@ -43,6 +44,7 @@ mod imp {
         #[property(name = "tags", get, member = tags, type = Vec<String>)]
         #[property(name = "is-symbolic", get, member = is_symbolic, type = bool)]
         #[property(name = "is-symlink", get, member = is_symlink, type = bool)]
+        #[property(name = "is-embedded", get, member = is_embedded, type = bool)]
         #[property(
             name = "path",
             get = |o: &Self| o.data.borrow().path.as_ref().map(|p| p.display().to_string()),
@@ -115,6 +117,7 @@ mod imp {
                 ("path", current_data.path != data.path),
                 ("is-symbolic", current_data.is_symbolic != data.is_symbolic),
                 ("is-symlink", current_data.is_symlink != data.is_symlink),
+                ("is-embedded", current_data.is_embedded != data.is_embedded),
                 (
                     "symlink-path",
                     current_data.symlink_path != data.symlink_path,
@@ -163,6 +166,8 @@ mod imp {
                     data.path = Some(path);
                     data.is_symlink = is_symlink;
                     data.tags = get_tags(&data);
+                } else {
+                    data.is_embedded = true;
                 }
 
                 data.is_symbolic = paintable.is_symbolic();

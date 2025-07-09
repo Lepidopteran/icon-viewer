@@ -281,6 +281,12 @@ mod imp {
                         match selector.imp().filter_widget.symlink_filter_mode() {
                             FilterMode::Is => icon.is_symlink(),
                             FilterMode::Not => !icon.is_symlink(),
+                        }
+                    }),
+                    Box::new(|icon: &IconObject, selector: &super::IconSelector| {
+                        match selector.imp().filter_widget.embedded_filter_mode() {
+                            FilterMode::Is => icon.is_embedded(),
+                            FilterMode::Not => !icon.is_embedded(),
                             FilterMode::Either => true,
                         }
                     }),

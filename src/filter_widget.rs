@@ -42,11 +42,17 @@ mod imp {
         #[template_child]
         symlink_check: TemplateChild<gtk::CheckButton>,
 
+        #[template_child]
+        embedded_check: TemplateChild<gtk::CheckButton>,
+
         #[property(get, set = set_symlink_filter_mode, construct, builder(FilterMode::Not))]
         pub symlink_filter_mode: RefCell<FilterMode>,
 
         #[property(get, set = set_symbolic_filter_mode, construct, builder(FilterMode::Either))]
         pub symbolic_filter_mode: RefCell<FilterMode>,
+
+        #[property(get, set = set_embedded_filter_mode, construct, builder(FilterMode::Either))]
+        pub embedded_filter_mode: RefCell<FilterMode>,
 
         #[property(get, set = set_included_categories)]
         pub included_categories: RefCell<Vec<String>>,
@@ -66,6 +72,13 @@ mod imp {
         imp.obj().notify_symbolic_filter_mode();
     }
 
+    fn set_embedded_filter_mode(imp: &FilterWidget, mode: FilterMode) {
+        map_filter_mode_to_check(&imp.embedded_check, &mode);
+
+        *imp.embedded_filter_mode.borrow_mut() = mode;
+        imp.obj().notify_symbolic_filter_mode();
+    }
+
     fn set_included_categories(imp: &FilterWidget, included_categories: Vec<String>) {
         let included_categories_set: HashSet<_> = HashSet::from_iter(included_categories);
 
@@ -77,6 +90,19 @@ mod imp {
 
     #[gtk::template_callbacks]
     impl FilterWidget {
+        #[template_callback]
+        fn embedded_toggled(&self) {
+            let obj = self.obj();
+
+            let new_mode = match obj.embedded_filter_mode() {
+                FilterMode::Is => FilterMode::Not,
+                FilterMode::Not => FilterMode::Either,
+                FilterMode::Either => FilterMode::Is,
+            };
+
+            obj.set_embedded_filter_mode(new_mode);
+        }
+
         #[template_callback]
         fn symbolic_toggled(&self) {
             let obj = self.obj();
