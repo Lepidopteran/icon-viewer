@@ -34,7 +34,7 @@
                 <child>
                   <object class="GtkCheckButton" id="symlink_check">
 										<signal handler="symlink_toggled" name="toggled" swapped="true"></signal>
-                    <property name="label">Linked</property>
+                    <property name="label">Symlink</property>
                   </object>
                 </child>
                 <child>
