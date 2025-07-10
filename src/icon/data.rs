@@ -6,6 +6,7 @@ pub struct IconData {
     pub name: String,
     pub aliases: Vec<String>,
     pub tags: Vec<String>,
+    pub symlink_target_index: Option<u32>,
     pub path: Option<PathBuf>,
     pub symlink_path: Option<PathBuf>,
     pub is_symbolic: bool,
@@ -30,7 +31,7 @@ mod imp {
         path::Path,
     };
 
-    use gtk::glib::Properties;
+    use gtk::{glib::Properties, INVALID_LIST_POSITION};
 
     use crate::icon_theme;
 
@@ -42,6 +43,13 @@ mod imp {
         #[property(name = "name", get, set = set_name, member = name, type = String)]
         #[property(name = "aliases", get, set, member = aliases, type = Vec<String>)]
         #[property(name = "tags", get, member = tags, type = Vec<String>)]
+        #[property(
+            name = "symlink-target-index",
+            get = |o: &Self| o.data.borrow().symlink_target_index.unwrap_or(INVALID_LIST_POSITION),
+            set = |o: &Self, v: u32| o.data.borrow_mut().symlink_target_index = if v == INVALID_LIST_POSITION { None } else { Some(v) },
+            member = symlink_target_index,
+            type = u32
+        )]
         #[property(name = "is-symbolic", get, member = is_symbolic, type = bool)]
         #[property(name = "is-symlink", get, member = is_symlink, type = bool)]
         #[property(name = "is-embedded", get, member = is_embedded, type = bool)]
@@ -306,6 +314,10 @@ impl IconObject {
 
     pub fn add_aliases(&self, aliases: Vec<String>) {
         self.imp().add_aliases(aliases);
+    }
+    
+    pub fn has_target_index(&self) -> bool {
+        self.imp().data.borrow().symlink_target_index.is_some()
     }
 
     pub fn data(&self) -> Ref<IconData> {
