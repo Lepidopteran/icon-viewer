@@ -250,6 +250,7 @@ mod imp {
 
             let status_revealer = self.status_revealer.get();
             let progress_bar = self.progress.get();
+            let filter = self.filter.clone();
             glib::spawn_future_local(async move {
                 while let Ok((index, aliases)) = alias_rx.recv().await {
                     let icon = icons.get(index).unwrap();
@@ -291,9 +292,12 @@ mod imp {
 
                 let filters: Vec<FilterFunction> = vec![
                     Box::new(|icon: &IconObject, selector: &super::IconSelector| {
+                        let linked = icon.is_symlink() && icon.has_target_index();
+
                         match selector.imp().filter_widget.symlink_filter_mode() {
-                            FilterMode::Is => icon.is_symlink(),
-                            FilterMode::Not => !icon.is_symlink(),
+                            FilterMode::Is => linked,
+                            FilterMode::Not => !linked,
+                            FilterMode::Either => true,
                         }
                     }),
                     Box::new(|icon: &IconObject, selector: &super::IconSelector| {
