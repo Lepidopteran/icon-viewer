@@ -28,6 +28,8 @@
                 <property name="label">Filters</property>
                 <property name="popover">
                   <object class="GtkPopover">
+                    <property name="halign">start</property>
+                    <property name="has-arrow">false</property>
                     <child>
                       <object class="GtkScrolledWindow">
                         <property name="propagate-natural-width">true</property>
@@ -58,24 +60,24 @@
               <object class="GtkOverlay" id="container">
                 <child type="overlay">
                   <object class="GtkRevealer" id="status_revealer">
-										<property name="transition-type">slide-up</property>
+                    <property name="transition-type">slide-up</property>
                     <property name="valign">end</property>
                     <property name="halign">start</property>
                     <child>
                       <object class="GtkBox">
                         <child>
                           <object class="GtkLabel">
-														<property name="margin-start">4</property>
-														<property name="margin-end">4</property>
-														<property name="margin-top">4</property>
-														<property name="margin-bottom">4</property>
+                            <property name="margin-start">4</property>
+                            <property name="margin-end">4</property>
+                            <property name="margin-top">4</property>
+                            <property name="margin-bottom">4</property>
                             <property name="label">Processing Icons</property>
                           </object>
                         </child>
                         <child>
                           <object class="GtkProgressBar" id="progress">
-														<property name="margin-end">8</property>
-														<property name="valign">center</property>
+                            <property name="margin-end">8</property>
+                            <property name="valign">center</property>
                           </object>
                         </child>
                         <style>
