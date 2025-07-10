@@ -31,6 +31,7 @@ mod imp {
     use super::*;
 
     type FilterFunction = Box<dyn Fn(&IconObject, &super::IconSelector) -> bool + 'static>;
+    type SymlinkMessage = (usize, Vec<(usize, String)>);
 
     #[derive(CompositeTemplate, Properties, Default)]
     #[properties(wrapper_type = super::IconSelector)]
@@ -213,19 +214,19 @@ mod imp {
 
             let non_symlinks_clone = non_symlinks.clone();
 
-            let (alias_tx, alias_rx) = async_channel::bounded::<(usize, Vec<String>)>(1);
+            let (alias_tx, alias_rx) = async_channel::bounded::<SymlinkMessage>(1);
             gio::spawn_blocking(move || {
                 for (index, icon) in non_symlinks_clone.iter() {
                     let aliases: Vec<_> = symlinks
                         .iter()
-                        .filter_map(|(_, s)| {
+                        .filter_map(|(i, s)| {
                             let IconData { symlink_path, .. } = s;
 
                             if let (Some(symlink_target), Some(path)) = (symlink_path, &icon.path) {
                                 if symlink_target.is_absolute() && symlink_target == path
                                     || path.parent().unwrap().join(symlink_target) == *path
                                 {
-                                    Some(s.name.clone())
+                                    Some((*i, s.name.clone()))
                                 } else {
                                     None
                                 }
@@ -252,10 +253,22 @@ mod imp {
             glib::spawn_future_local(async move {
                 while let Ok((index, aliases)) = alias_rx.recv().await {
                     let icon = icons.get(index).unwrap();
-                    icon.add_aliases(aliases);
+
+                    for alias in aliases.clone() {
+                        let alias_icon = icons.get(alias.0).unwrap();
+                        alias_icon.set_symlink_target_index(index as u32);
+                    }
+
+                    let aliases_names = aliases.iter().map(|(_, n)| n.to_string()).collect();
+
+                    icon.add_aliases(aliases_names);
 
                     progress_bar.set_fraction((index + 1) as f64 / icons.len() as f64);
                     status_revealer.set_reveal_child(index != data.len() - 1);
+
+                    if index == data.len() - 1 {
+                        filter.changed(gtk::FilterChange::Different);
+                    }
                 }
             });
 
