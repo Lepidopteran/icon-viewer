@@ -7,7 +7,7 @@ fn main() {
     println!("cargo::rerun-if-changed=data");
     println!("cargo::rerun-if-changed=resources/icon.svg");
 
-    let app_name = env!("CARGO_PKG_NAME");
+    let app_name = "codes.blaine.NettIconViewer";
     let app_icon = include_str!("resources/icon.svg");
     let tree = {
         let mut opt = usvg::Options::default();
