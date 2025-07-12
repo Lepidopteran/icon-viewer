@@ -38,6 +38,7 @@
                         <child>
                           <object class="NettIconViewerSelectorFilters" id="filter_widget">
                             <signal handler="filter_changed" name="notify::included-categories" swapped="true"></signal>
+                            <signal handler="filter_changed" name="notify::embedded-filter-mode" swapped="true"></signal>
                             <signal handler="filter_changed" name="notify::symbolic-filter-mode" swapped="true"></signal>
                             <signal handler="filter_changed" name="notify::symlink-filter-mode" swapped="true"></signal>
                           </object>
