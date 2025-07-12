@@ -9,6 +9,7 @@
   </gresource>
   <gresource prefix="/codes/blaine/nett-icon-viewer/icons/scalable/actions/">
     <file alias="sliders-symbolic.svg" preprocess="xml-stripblanks">icons/sliders-symbolic.svg</file>
+    <file alias="filter-symbolic.svg" preprocess="xml-stripblanks">icons/filter-symbolic.svg</file>
     <file alias="view-list-symbolic.svg" preprocess="xml-stripblanks">icons/view-list-symbolic.svg</file>
   </gresource>
 </gresources>
