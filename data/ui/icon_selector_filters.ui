@@ -11,7 +11,7 @@
         <property name="spacing">4</property>
         <child>
           <object class="GtkExpander">
-						<property name="expanded">true</property>
+            <property name="expanded">true</property>
             <property name="label-widget">
               <object class="GtkLabel">
                 <property name="label">Types</property>
@@ -33,19 +33,19 @@
                 <property name="orientation">vertical</property>
                 <child>
                   <object class="GtkCheckButton" id="symlink_check">
-										<signal handler="symlink_toggled" name="toggled" swapped="true"></signal>
+                    <signal handler="symlink_toggled" name="toggled" swapped="true"></signal>
                     <property name="label">Symlink</property>
                   </object>
                 </child>
                 <child>
                   <object class="GtkCheckButton" id="embedded_check">
-										<signal handler="embedded_toggled" name="toggled" swapped="true"></signal>
+                    <signal handler="embedded_toggled" name="toggled" swapped="true"></signal>
                     <property name="label">Embedded</property>
                   </object>
                 </child>
                 <child>
                   <object class="GtkCheckButton" id="symbolic_check">
-										<signal handler="symbolic_toggled" name="toggled" swapped="true"></signal>
+                    <signal handler="symbolic_toggled" name="toggled" swapped="true"></signal>
                     <property name="label">Symbolic</property>
                   </object>
                 </child>
@@ -54,7 +54,38 @@
           </object>
         </child>
         <child>
-					<object class="GtkExpander">
+          <object class="GtkExpander">
+            <property name="expanded">true</property>
+            <property name="label-widget">
+              <object class="GtkLabel">
+                <property name="label">Misc</property>
+                <property name="xalign">0</property>
+                <property name="margin-start">4</property>
+                <property name="margin-end">4</property>
+                <property name="margin-top">4</property>
+                <property name="margin-bottom">4</property>
+                <attributes>
+                  <attribute name="weight" value="bold"></attribute>
+                </attributes>
+              </object>
+            </property>
+            <property name="child">
+              <object class="GtkBox">
+                <property name="margin-start">8</property>
+                <property name="margin-top">4</property>
+                <property name="margin-bottom">4</property>
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="GtkCheckButton" id="invalid_symlink_check">
+                    <property name="label">Display Unlinked Icons</property>
+                  </object>
+                </child>
+              </object>
+            </property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkExpander">
             <property name="label-widget">
               <object class="GtkLabel">
                 <property name="label">Categories</property>

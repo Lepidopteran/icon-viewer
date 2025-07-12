@@ -16,8 +16,8 @@ mod imp {
     };
 
     use gtk::{
-        Allocation, CompositeTemplate, ListItem, SignalListItemFactory, SingleSelection,
-        TemplateChild,
+        Allocation, CompositeTemplate, INVALID_LIST_POSITION, ListItem, SignalListItemFactory,
+        SingleSelection, TemplateChild,
         gio::{self, ListStore},
         glib::{Properties, subclass::InitializingObject},
         prelude::*,
@@ -292,11 +292,14 @@ mod imp {
 
                 let filters: Vec<FilterFunction> = vec![
                     Box::new(|icon: &IconObject, selector: &super::IconSelector| {
-                        let linked = icon.is_symlink() && icon.has_target_index();
-
-                        match selector.imp().filter_widget.symlink_filter_mode() {
-                            FilterMode::Is => linked,
-                            FilterMode::Not => !linked,
+                        let filter_widget = selector.imp().filter_widget.get();
+                        match filter_widget.symlink_filter_mode() {
+                            FilterMode::Is => icon.is_symlink(),
+                            FilterMode::Not => {
+                                filter_widget.display_invalid_symlinks()
+                                    && !icon.has_target_index()
+                                    || !icon.is_symlink()
+                            }
                             FilterMode::Either => true,
                         }
                     }),

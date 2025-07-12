@@ -13,7 +13,7 @@ pub enum FilterMode {
 use super::CATEGORIES;
 
 mod imp {
-    use std::cell::RefCell;
+    use std::cell::{Cell, RefCell};
     use std::collections::HashSet;
 
     use gtk::glib::{Properties, subclass::InitializingObject};
@@ -44,6 +44,12 @@ mod imp {
 
         #[template_child]
         embedded_check: TemplateChild<gtk::CheckButton>,
+
+        #[template_child]
+        invalid_symlink_check: TemplateChild<gtk::CheckButton>,
+
+        #[property(get, set)]
+        pub display_invalid_symlinks: Cell<bool>,
 
         #[property(get, set = set_symlink_filter_mode, construct, builder(FilterMode::Not))]
         pub symlink_filter_mode: RefCell<FilterMode>,
@@ -171,6 +177,11 @@ mod imp {
         fn constructed(&self) {
             self.parent_constructed();
             let obj = self.obj().clone();
+
+            self.invalid_symlink_check
+                .bind_property("active", &obj, "display-invalid-symlinks")
+                .bidirectional()
+                .build();
 
             map_filter_mode_to_check(&self.symbolic_check, &obj.symbolic_filter_mode());
             map_filter_mode_to_check(&self.symlink_check, &obj.symlink_filter_mode());
