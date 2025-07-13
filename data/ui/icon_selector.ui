@@ -25,7 +25,7 @@
             </child>
             <child>
               <object class="GtkMenuButton">
-                <property name="label">Filters</property>
+                <property name="icon-name">filter-symbolic</property>
                 <property name="popover">
                   <object class="GtkPopover">
                     <property name="halign">start</property>
