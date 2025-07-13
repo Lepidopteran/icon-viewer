@@ -16,7 +16,7 @@ mod imp {
     };
 
     use gtk::{
-        Allocation, CompositeTemplate, INVALID_LIST_POSITION, ListItem, SignalListItemFactory,
+        Allocation, CompositeTemplate, ListItem, SignalListItemFactory,
         SingleSelection, TemplateChild,
         gio::{self, ListStore},
         glib::{Properties, subclass::InitializingObject},
