@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <gresources>
-  <gresource prefix="/codes/blaine/nett-icon-viewer/">
+  <gresource prefix="/codes/blaine/NettIconViewer/">
     <file alias="window.ui" compressed="true" preprocess="xml-stripblanks">ui/window.ui</file>
     <file alias="icon_cell.ui" compressed="true" preprocess="xml-stripblanks">ui/icon_cell.ui</file>
     <file alias="icon_selector.ui" compressed="true" preprocess="xml-stripblanks">ui/icon_selector.ui</file>
     <file alias="icon_selector_filters.ui" compressed="true" preprocess="xml-stripblanks">ui/icon_selector_filters.ui</file>
     <file alias="icon_details.ui" compressed="true" preprocess="xml-stripblanks">ui/icon_details.ui</file>
   </gresource>
-  <gresource prefix="/codes/blaine/nett-icon-viewer/icons/scalable/actions/">
+  <gresource prefix="/codes/blaine/NettIconViewer/icons/scalable/actions/">
     <file alias="sliders-symbolic.svg" preprocess="xml-stripblanks">icons/sliders-symbolic.svg</file>
     <file alias="filter-symbolic.svg" preprocess="xml-stripblanks">icons/filter-symbolic.svg</file>
     <file alias="view-list-symbolic.svg" preprocess="xml-stripblanks">icons/view-list-symbolic.svg</file>

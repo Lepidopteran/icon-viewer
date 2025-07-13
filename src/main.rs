@@ -13,7 +13,7 @@ fn main() -> glib::ExitCode {
     }
 
     gtk::init().expect("Failed to initialize GTK");
-    gio::resources_register_include!("nett-icon-viewer.gresource")
+    gio::resources_register_include!("NettIconViewer.gresource")
         .expect("Failed to register resources");
 
     let app = app::new();

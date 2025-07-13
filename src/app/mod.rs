@@ -3,7 +3,7 @@ mod data_row;
 mod icon_details;
 mod window;
 
-pub const APP_ID: &str = "codes.blaine.nett-icon-viewer";
+pub const APP_ID: &str = "codes.blaine.NettIconViewer";
 
 pub fn new() -> Application {
     let app = gtk::Application::new(Some(APP_ID), Default::default());

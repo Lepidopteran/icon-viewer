@@ -21,7 +21,7 @@ mod imp {
 
     #[derive(CompositeTemplate, Properties, Default)]
     #[properties(wrapper_type = super::IconWidget)]
-    #[template(resource = "/codes/blaine/nett-icon-viewer/icon_cell.ui")]
+    #[template(resource = "/codes/blaine/NettIconViewer/icon_cell.ui")]
     pub struct IconWidget {
         #[template_child]
         pub overlay: TemplateChild<gtk::Overlay>,

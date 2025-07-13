@@ -28,7 +28,7 @@ mod imp {
 
     #[derive(CompositeTemplate, Properties, Default)]
     #[properties(wrapper_type = super::FilterWidget)]
-    #[template(resource = "/codes/blaine/nett-icon-viewer/icon_selector_filters.ui")]
+    #[template(resource = "/codes/blaine/NettIconViewer/icon_selector_filters.ui")]
     pub struct FilterWidget {
         #[template_child]
         layout: TemplateChild<gtk::Box>,

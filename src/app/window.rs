@@ -20,7 +20,7 @@ mod imp {
     const MINIMUM_SIZE_BUFFER: i32 = 20;
 
     #[derive(CompositeTemplate, Properties, Debug, Default)]
-    #[template(resource = "/codes/blaine/nett-icon-viewer/window.ui")]
+    #[template(resource = "/codes/blaine/NettIconViewer/window.ui")]
     #[properties(wrapper_type = super::Window)]
     pub struct Window {
         #[template_child]

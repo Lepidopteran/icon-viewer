@@ -35,7 +35,7 @@ mod imp {
 
     #[derive(CompositeTemplate, Properties, Default)]
     #[properties(wrapper_type = super::IconSelector)]
-    #[template(resource = "/codes/blaine/nett-icon-viewer/icon_selector.ui")]
+    #[template(resource = "/codes/blaine/NettIconViewer/icon_selector.ui")]
     pub struct IconSelector {
         #[template_child]
         pub layout: TemplateChild<gtk::Box>,

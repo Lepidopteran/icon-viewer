@@ -22,7 +22,7 @@ mod imp {
 
     #[derive(CompositeTemplate, Properties, Default)]
     #[properties(wrapper_type = super::IconDetails)]
-    #[template(resource = "/codes/blaine/nett-icon-viewer/icon_details.ui")]
+    #[template(resource = "/codes/blaine/NettIconViewer/icon_details.ui")]
     pub struct IconDetails {
         #[template_child]
         pub stack: TemplateChild<gtk::Stack>,
