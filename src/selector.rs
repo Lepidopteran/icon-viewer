@@ -251,6 +251,7 @@ mod imp {
             let status_revealer = self.status_revealer.get();
             let progress_bar = self.progress.get();
             let filter = self.filter.clone();
+            let filter_widget = self.filter_widget.get();
             glib::spawn_future_local(async move {
                 while let Ok((index, aliases)) = alias_rx.recv().await {
                     let icon = icons.get(index).unwrap();
@@ -267,7 +268,7 @@ mod imp {
                     progress_bar.set_fraction((index + 1) as f64 / icons.len() as f64);
                     status_revealer.set_reveal_child(index != data.len() - 1);
 
-                    if index == data.len() - 1 {
+                    if index == data.len() - 1 && filter_widget.display_invalid_symlinks() {
                         filter.changed(gtk::FilterChange::Different);
                     }
                 }
