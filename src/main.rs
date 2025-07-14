@@ -8,10 +8,6 @@ fn main() -> glib::ExitCode {
     env_logger::init();
     color_eyre::install().ok();
 
-    unsafe {
-        std::env::set_var("GTK_CSD", "0");
-    }
-
     gtk::init().expect("Failed to initialize GTK");
     gio::resources_register_include!("NettIconViewer.gresource")
         .expect("Failed to register resources");
