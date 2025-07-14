@@ -41,7 +41,7 @@ fn main() {
     )
     .unwrap();
 
-    for size in [16, 24, 32, 64, 128, 256, 512] {
+    for size in [16, 24, 32, 48, 64, 128, 256, 512] {
         let file_name = match size {
             256 => "128x128@2x.png".to_string(),
             _ => format!("{size}x{size}.png"),

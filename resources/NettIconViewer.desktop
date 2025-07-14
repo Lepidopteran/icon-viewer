@@ -6,6 +6,6 @@ Name=Nett Icon Viewer
 Comment=View all the icons in gtk themes
 Categories=Development;
 
-Icon=nett-icon-viewer
+Icon=codes.blaine.NettIconViewer
 Exec=nett-icon-viewer
 Terminal=false
