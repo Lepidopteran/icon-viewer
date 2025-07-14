@@ -7,7 +7,6 @@ fn main() {
     println!("cargo::rerun-if-changed=data");
     println!("cargo::rerun-if-changed=resources/icon.svg");
 
-    let app_name = env!("CARGO_PKG_NAME");
     let app_icon = include_str!("resources/icon.svg");
     let tree = {
         let mut opt = usvg::Options::default();
@@ -37,7 +36,7 @@ fn main() {
         load_from_memory_with_format(&data, image::ImageFormat::Png).expect("Failed to load image");
 
     std::fs::write(
-        format!("{}/{}-1024x1024.png", ICON_BUILD_DIR, app_name),
+        format!("{}/1024x1024.png", ICON_BUILD_DIR),
         data,
     )
     .unwrap();
@@ -45,7 +44,7 @@ fn main() {
     for size in [32, 64, 128, 256, 512] {
         let file_name = match size {
             256 => "128x128@2x.png".to_string(),
-            _ => format!("{}-{}x{}.png", app_name, size, size),
+            _ => format!("{size}x{size}.png"),
         };
 
         let resized = img.resize(size, size, image::imageops::FilterType::Nearest);
@@ -55,7 +54,7 @@ fn main() {
             .unwrap();
     }
 
-    std::fs::write(format!("{}/{}.svg", ICON_BUILD_DIR, app_name), app_icon).unwrap();
+    std::fs::write(format!("{}/scalable.svg", ICON_BUILD_DIR), app_icon).unwrap();
     glib_build_tools::compile_resources(
         &["data"],
         "data/resources.gresource.xml",
