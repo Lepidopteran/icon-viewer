@@ -78,6 +78,7 @@
                         </child>
                         <child>
                           <object class="GtkProgressBar" id="progress">
+                            <property name="width-request">150</property>
                             <property name="margin-end">8</property>
                             <property name="valign">center</property>
                           </object>
@@ -113,7 +114,6 @@
         <child>
           <object class="GtkSeparator"></object>
         </child>
-        <child></child>
         <child>
           <object class="GtkCenterBox">
             <property name="hexpand">true</property>
