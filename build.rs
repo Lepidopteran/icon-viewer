@@ -47,7 +47,7 @@ fn main() {
             _ => format!("{size}x{size}.png"),
         };
 
-        let resized = img.resize(size, size, image::imageops::FilterType::Nearest);
+        let resized = img.resize(size, size, image::imageops::FilterType::Triangle);
 
         resized
             .save(format!("{}/{}", ICON_BUILD_DIR, file_name))
