@@ -6,8 +6,6 @@ It is currently a work in progress and is a work of concept.
 
 The word Nett is German for "Nice", so the literal translation of the name is "Nice Icon Viewer."
 
-This name may change, but I think it is funny, so I might keep it.
-
 ## Building 
 
 The main application is built with [`gtk-rs`](https://gtk-rs.org/) so you must have the required dependencies for it to be installed.
