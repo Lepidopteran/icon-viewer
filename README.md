@@ -45,6 +45,40 @@ To test/run the application you can run:
 cargo run
 ```
 
+## Installing
+
+It is planned to be able to install the application using flatpak, but I haven't been able to that yet.
+
+For now, you can use `meson` and `ninja` to install the application.
+
+### Prerequisites
+
+#### Fedora
+
+```bash
+sudo dnf install meson ninja
+```
+
+#### Debian/Ubuntu
+
+```bash
+sudo apt install meson ninja-build
+```
+
+#### Arch Linux
+
+```bash
+sudo pacman -S meson ninja
+```
+
+### Building
+
+To install the application you need `meson` and `ninja`.
+
+```bash
+meson build
+ninja install -C build
+```
 
 ## Contributing
 
