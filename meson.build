@@ -14,7 +14,8 @@ bindir = prefix / get_option('bindir')
 datadir = prefix / get_option('datadir')
 
 install_data('resources/NettIconViewer.desktop',
-  install_dir: join_paths(get_option('datadir'), 'applications')
+  install_dir: join_paths(get_option('datadir'), 'applications'),
+  rename: 'codes.blaine.NettIconViewer.desktop',
 )
 
 subdir('src')
