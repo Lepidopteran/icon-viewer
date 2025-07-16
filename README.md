@@ -37,7 +37,10 @@ sudo pacman -S gtk4 base-devel
 ```bash
 cargo build
 ```
-or
+
+#### Running
+To test/run the application you can run:
+
 ```bash
 cargo run
 ```
