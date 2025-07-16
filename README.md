@@ -2,8 +2,6 @@
 
 Nett Icon Viewer is a program that displays icons from a GTK icon theme.
 
-It is currently a work in progress and is a work of concept.
-
 The word Nett is German for "Nice", so the literal translation of the name is "Nice Icon Viewer."
 
 ## Building 
