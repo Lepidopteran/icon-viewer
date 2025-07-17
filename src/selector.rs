@@ -16,8 +16,8 @@ mod imp {
     };
 
     use gtk::{
-        Allocation, CompositeTemplate, ListItem, SignalListItemFactory,
-        SingleSelection, TemplateChild,
+        Allocation, CompositeTemplate, ListItem, SignalListItemFactory, SingleSelection,
+        TemplateChild,
         gio::{self, ListStore},
         glib::{Properties, subclass::InitializingObject},
         prelude::*,
@@ -31,7 +31,7 @@ mod imp {
     use super::*;
 
     type FilterFunction = Box<dyn Fn(&IconObject, &super::IconSelector) -> bool + 'static>;
-    type SymlinkMessage = (usize, Vec<(usize, String)>);
+    type SymlinkMessage = (usize, usize, Vec<(usize, String)>);
 
     #[derive(CompositeTemplate, Properties, Default)]
     #[properties(wrapper_type = super::IconSelector)]
@@ -216,7 +216,7 @@ mod imp {
 
             let (alias_tx, alias_rx) = async_channel::bounded::<SymlinkMessage>(1);
             gio::spawn_blocking(move || {
-                for (index, icon) in non_symlinks_clone.iter() {
+                for (index, (icon_index, icon)) in non_symlinks_clone.iter().enumerate() {
                     let aliases: Vec<_> = symlinks
                         .iter()
                         .filter_map(|(i, s)| {
@@ -237,7 +237,7 @@ mod imp {
                         .collect();
 
                     alias_tx
-                        .send_blocking((*index, aliases))
+                        .send_blocking((index, *icon_index, aliases))
                         .expect("Failed to send aliases");
                 }
             });
@@ -253,22 +253,24 @@ mod imp {
             let filter = self.filter.clone();
             let filter_widget = self.filter_widget.get();
             glib::spawn_future_local(async move {
-                while let Ok((index, aliases)) = alias_rx.recv().await {
-                    let icon = icons.get(index).unwrap();
+                while let Ok((index, icon_index, aliases)) = alias_rx.recv().await {
+                    let icon = icons.get(icon_index).unwrap();
 
                     for alias in aliases.clone() {
                         let alias_icon = icons.get(alias.0).unwrap();
-                        alias_icon.set_symlink_target_index(index as u32);
+                        alias_icon.set_symlink_target_index(icon_index as u32);
                     }
 
                     let aliases_names = aliases.iter().map(|(_, n)| n.to_string()).collect();
 
                     icon.add_aliases(aliases_names);
 
-                    progress_bar.set_fraction((index + 1) as f64 / icons.len() as f64);
-                    status_revealer.set_reveal_child(index != data.len() - 1);
+                    progress_bar.set_fraction((icon_index + 1) as f64 / icons.len() as f64);
+                    status_revealer.set_reveal_child(index != non_symlinks.len() - 1);
 
-                    if index == data.len() - 1 && filter_widget.display_invalid_symlinks() {
+                    if index == non_symlinks.len() - 1
+                        && filter_widget.display_invalid_symlinks()
+                    {
                         filter.changed(gtk::FilterChange::Different);
                     }
                 }
@@ -297,8 +299,7 @@ mod imp {
                         match filter_widget.symlink_filter_mode() {
                             FilterMode::Is => icon.is_symlink(),
                             FilterMode::Not => {
-                                filter_widget.display_invalid_symlinks()
-                                    && !icon.has_target_index()
+                                filter_widget.display_invalid_symlinks() && !icon.has_target_index()
                                     || !icon.is_symlink()
                             }
                             FilterMode::Either => true,
