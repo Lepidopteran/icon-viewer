@@ -17,7 +17,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Install GTK
-      run: sudo apt -y install libgtk-4-dev build-essential
+      run: sudo apt update -y && sudo apt -y install libgtk-4-dev build-essential
     - name: Build
       run: cargo build --verbose
     - name: Run tests
