@@ -18,9 +18,9 @@ install_data('resources/NettIconViewer.desktop',
   rename: 'codes.blaine.NettIconViewer.desktop',
 )
 
-subdir('src')
+subdir('icon-viewer/src')
 
-icon_sizes = [
+icon_names = [
   '16x16',
   '24x24',
   '32x32',
@@ -29,19 +29,17 @@ icon_sizes = [
   '128x128',
   '128x128@2x',
   '512x512',
-  '1024x1024'
+  '1024x1024',
+  'scalable',
 ]
 
-foreach size : icon_sizes
-  install_data('resources/build/' + size + '.png',
-    install_dir: join_paths(get_option('datadir'), 'icons', 'hicolor', size, 'apps'),
-    rename: 'codes.blaine.NettIconViewer.png'
-  )
-endforeach
-
-install_data('resources/build/scalable.svg',
-  install_dir: join_paths(get_option('datadir'), 'icons', 'hicolor', 'scalable', 'apps'),
-  rename: 'codes.blaine.NettIconViewer.svg'
+icons = custom_target('generate-icons',
+  output: icon_names,
+  install_dir: join_paths(get_option('datadir'), 'icons', 'hicolor'),
+  install: true,
+  command : [
+    cargo, 'run', '--package', 'generate_icons', '--', meson.current_build_dir()
+  ]
 )
 
 gnome.post_install(

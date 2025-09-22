@@ -543,14 +543,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "generate_icons"
-version = "0.1.0"
-dependencies = [
- "image",
- "resvg",
-]
-
-[[package]]
 name = "getrandom"
 version = "0.2.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -953,8 +945,10 @@ dependencies = [
  "fuzzy-matcher",
  "glib-build-tools",
  "gtk4",
+ "image",
  "log",
  "once_cell",
+ "resvg",
  "serde",
  "toml",
  "toml_edit",
